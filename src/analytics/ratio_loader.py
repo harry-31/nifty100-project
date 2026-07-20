@@ -265,8 +265,8 @@ def generate_edge_case_log(df):
         f.write("- Version difference\n")
         f.write("- Formula discrepancy\n")
 
-    print("✅ ratio_edge_cases.log generated.")
-    print("✅ financial_ratios table updated successfully.")
+    print("ratio_edge_cases.log generated.")
+    print("financial_ratios table updated successfully.")
 
 
 if __name__ == "__main__":
