@@ -1,0 +1,32 @@
+quality_compounder:
+  roe_min: 15
+  debt_to_equity_max: 1
+  free_cash_flow_min: 0
+  revenue_cagr_min: 10
+
+value_pick:
+  pe_max: 20
+  pb_max: 3
+  debt_to_equity_max: 2
+  dividend_yield_min: 1
+
+growth_accelerator:
+  pat_cagr_min: 20
+  revenue_cagr_min: 15
+  debt_to_equity_max: 2
+
+debt_free_bluechip:
+  debt_to_equity_max: 0
+  roe_min: 15
+  interest_coverage_min: 5
+
+dividend_champion:
+  dividend_yield_min: 2
+  roe_min: 15
+  free_cash_flow_min: 0
+
+turnaround_watch:
+  revenue_cagr_min: 5
+  pat_cagr_min: 5
+  free_cash_flow_min: 0
+  debt_to_equity_max: 3
