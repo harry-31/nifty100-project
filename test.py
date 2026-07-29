@@ -1,5 +1,12 @@
-from src.screener.engine import export_screener_report
+from src.dashboard.utils.db import get_ratios
 
-path = export_screener_report()
+df = get_ratios()
 
-print("Report Generated:", path)
+print(df.columns)
+print(df.head())
+from src.dashboard.utils.db import get_market_cap, get_companies
+
+print(get_market_cap("2024").columns)
+print(get_companies().columns)
+print(get_market_cap("2024").head())
+print(get_companies().head())
