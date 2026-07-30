@@ -2,7 +2,7 @@
 
 A Streamlit-based financial analytics dashboard for analyzing **92 Nifty 100 companies** using financial statements, market data, valuation metrics, and peer comparisons.
 
-Built as a **Bluestock Fintech Capstone Project (Sprint 4)**.
+Built as a **Bluestock Fintech  Project (Sprint 4)**.
 
 ---
 
@@ -294,4 +294,3 @@ pytest -v
 ## 👤 Contributors
 
 **Himani**
-Bluestock Fintech Capstone Project
