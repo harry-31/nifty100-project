@@ -15,7 +15,10 @@ st.set_page_config(
 
 st.title("📈 Nifty 100 Analytics Dashboard")
 
+# =========================
 # Sidebar
+# =========================
+
 year = st.sidebar.selectbox(
     "Select Financial Year",
     [
@@ -29,15 +32,22 @@ year = st.sidebar.selectbox(
     index=5
 )
 
-#load data
+# =========================
+# Load Data
+# =========================
+
 companies = get_companies()
 ratios = get_ratios(year=year)
+
 market_year = year[:4]
 market = get_market_cap(market_year)
+
 sectors = get_sectors()
 
-
+# =========================
 # KPI Calculations
+# =========================
+
 total_companies = len(companies)
 
 avg_roe = (
@@ -61,20 +71,20 @@ debt_free = (
 )
 
 if not market.empty:
-    median_pe = float(market["pe_ratio"].median())
+    median_pe = round(market["pe_ratio"].median(), 2)
 else:
     median_pe = 0
 
+# =========================
 # KPI Cards
+# =========================
+
 c1, c2, c3 = st.columns(3)
 c4, c5, c6 = st.columns(3)
 
 c1.metric("Total Companies", total_companies)
 c2.metric("Average ROE", avg_roe)
-c3.metric(
-    "Median P/E",
-    f"{median_pe:.2f}"
-)
+c3.metric("Median P/E", median_pe)
 
 c4.metric("Median D/E", median_de)
 c5.metric("Median Revenue CAGR", median_rev)
@@ -82,7 +92,10 @@ c6.metric("Debt-Free Companies", debt_free)
 
 st.divider()
 
+# =========================
 # Sector Distribution
+# =========================
+
 st.subheader("📊 Sector Distribution")
 
 if not sectors.empty:
@@ -108,14 +121,33 @@ else:
 
 st.divider()
 
-# Top 5 Companies by ROE
-st.subheader("🏆 Top 5 Companies by ROE")
+# =========================
+# Top 5 Companies by Composite Quality Score
+# =========================
+
+st.subheader("🏆 Top 5 Companies by Composite Quality Score")
 
 if not ratios.empty:
 
+    top5 = ratios.copy()
+
+    # Replace missing values
+    top5["return_on_equity_pct"] = top5["return_on_equity_pct"].fillna(0)
+    top5["revenue_cagr"] = top5["revenue_cagr"].fillna(0)
+    top5["fcf"] = top5["fcf"].fillna(0)
+    top5["debt_to_equity"] = top5["debt_to_equity"].fillna(0)
+
+    # Composite Quality Score
+    top5["quality_score"] = (
+        top5["return_on_equity_pct"] * 0.40
+        + top5["revenue_cagr"] * 0.30
+        + top5["fcf"] * 0.0001
+        - top5["debt_to_equity"] * 10
+    )
+
     top5 = (
-        ratios.sort_values(
-            by="return_on_equity_pct",
+        top5.sort_values(
+            by="quality_score",
             ascending=False
         )
         .head(5)
@@ -127,10 +159,13 @@ if not ratios.empty:
         right_on="id"
     )
 
+    top5["quality_score"] = top5["quality_score"].round(2)
+
     st.dataframe(
         top5[
             [
                 "company_name",
+                "quality_score",
                 "return_on_equity_pct",
                 "debt_to_equity",
                 "revenue_cagr"
@@ -142,4 +177,4 @@ if not ratios.empty:
 else:
     st.warning("No financial ratio data available.")
 
-st.success("✅ Home Screen Loaded Successfully")
+st.success(" Home Screen Loaded Successfully")

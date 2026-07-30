@@ -1,85 +1,106 @@
 import streamlit as st
+import pandas as pd
 import plotly.express as px
 
-from utils.db import (
-    get_market_cap,
-    get_companies
+from utils.db import get_capital_allocation
+
+st.set_page_config(page_title="Capital Allocation Map", layout="wide")
+st.title("🗺️ Capital Allocation Map")
+
+st.caption(
+    "Each tile is a company, grouped by its dominant capital allocation "
+    "pattern. Tile size reflects the number of companies in that group. "
+    "Click any tile to see the full company list for that pattern."
 )
 
-st.set_page_config(
-    page_title="Capital Allocation",
-    layout="wide"
-)
 
-st.title("💰 Capital Allocation")
+@st.cache_data(ttl=600, show_spinner=False)
+def load_capital_data() -> pd.DataFrame:
+    return get_capital_allocation()
 
-market = get_market_cap("2024")
-companies = get_companies()
 
-df = market.merge(
-    companies,
-    left_on="company_id",
-    right_on="id",
-    how="left"
-)
+df = load_capital_data()
 
-st.metric(
-    "Total Companies",
-    len(df)
-)
+if df.empty:
+    st.info("Capital Allocation data is not available in the current database.")
+    st.markdown("""
+### Expected Table
 
-st.metric(
-    "Total Market Cap",
-    f"{df['market_cap_crore'].sum():,.0f} Cr"
-)
+This page requires a table like:
+
+| company_id | pattern |
+|------------|----------|
+| 1 | Growth |
+| 2 | Dividend |
+| 3 | Debt Reduction |
+
+Since your database doesn't contain this table, this page cannot generate the treemap.
+""")
+    st.stop()
+    
+pattern_counts = df["pattern"].value_counts().reset_index()
+pattern_counts.columns = ["pattern", "company_count"]
 
 st.divider()
 
-st.subheader("Top 20 Companies by Market Cap")
 
-top = (
-    df.sort_values(
-        "market_cap_crore",
-        ascending=False
-    )
-    .head(20)
+# ---------------------------------------------------------------------------
+# Treemap
+# ---------------------------------------------------------------------------
+
+fig = px.treemap(
+    df,
+    path=[px.Constant("All Companies"), "pattern", "company_name"],
+    color="pattern",
+    title="Capital Allocation Patterns — 92 Companies",
 )
+fig.update_traces(root_color="lightgrey")
+fig.update_layout(margin=dict(t=50, l=10, r=10, b=10))
 
-fig = px.bar(
-    top,
-    x="company_name",
-    y="market_cap_crore",
-    text_auto=".2s",
-    title="Top Companies by Market Cap"
-)
-
-st.plotly_chart(
+selection = st.plotly_chart(
     fig,
-    use_container_width=True
+    use_container_width=True,
+    on_select="rerun",
+    key="capital_treemap",
 )
 
 st.divider()
 
-st.subheader("Market Capitalisation Table")
 
+# ---------------------------------------------------------------------------
+# Selected pattern -> company list
+# ---------------------------------------------------------------------------
+
+clicked_label = None
+
+if selection and selection.get("selection", {}).get("points"):
+    point = selection["selection"]["points"][0]
+    # Plotly treemap click gives the tile label — could be a pattern
+    # name or a leaf-level company name; resolve either to its pattern.
+    label = point.get("label")
+    if label in df["pattern"].values:
+        clicked_label = label
+    elif label in df["company_name"].values:
+        clicked_label = df.loc[df["company_name"] == label, "pattern"].iloc[0]
+
+if clicked_label:
+    st.subheader(f"📋 Companies — {clicked_label}")
+    subset = df[df["pattern"] == clicked_label][["company_name", "ticker", "broad_sector"]]
+    subset.columns = ["Company", "Ticker", "Sector"]
+    st.dataframe(subset.sort_values("Company"), use_container_width=True, hide_index=True)
+else:
+    st.info("Click a pattern or company tile above to see its full company list.")
+
+st.divider()
+
+
+# ---------------------------------------------------------------------------
+# Pattern summary table
+# ---------------------------------------------------------------------------
+
+st.subheader("📊 Pattern Summary")
 st.dataframe(
-    top[
-        [
-            "company_name",
-            "market_cap_crore",
-            "pe_ratio",
-            "pb_ratio",
-            "dividend_yield_pct"
-        ]
-    ].rename(
-        columns={
-            "company_name":"Company",
-            "market_cap_crore":"Market Cap",
-            "pe_ratio":"P/E",
-            "pb_ratio":"P/B",
-            "dividend_yield_pct":"Dividend Yield"
-        }
-    ),
+    pattern_counts.rename(columns={"pattern": "Pattern", "company_count": "Companies"}),
     use_container_width=True,
-    hide_index=True
+    hide_index=True,
 )
