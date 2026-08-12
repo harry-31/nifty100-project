@@ -145,5 +145,27 @@ def portfolio_stats():
             "Mean": safe_value(values.mean()),
             "Std": safe_value(values.std()),
         }
+    output_dir = Path("output")
+    output_dir.mkdir(exist_ok=True)
+
+    stats_rows = []
+
+    for metric, stats in result.items():
+        stats_rows.append({
+            "metric": metric,
+            "P10": stats["P10"],
+            "P25": stats["P25"],
+            "P50": stats["P50"],
+            "P75": stats["P75"],
+            "P90": stats["P90"],
+            "Mean": stats["Mean"],
+            "Std": stats["Std"],
+        })
+
+    pd.DataFrame(stats_rows).to_csv(
+        output_dir / "portfolio_stats.csv",
+        index=False
+    )
 
     return result
+   
