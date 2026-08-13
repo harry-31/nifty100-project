@@ -1,22 +1,19 @@
-from typing import Optional
-
-
-def net_profit_margin(net_profit: float, sales: float) -> Optional[float]:
+def net_profit_margin(net_profit: float, sales: float) -> float | None:
 
     if sales == 0:
         return None
     return round((net_profit / sales) * 100, 2)
 
 
-def operating_profit_margin(operating_profit: float, sales: float) -> Optional[float]:
-    
+def operating_profit_margin(operating_profit: float, sales: float) -> float | None:
+
     if sales == 0:
         return None
     return round((operating_profit / sales) * 100, 2)
 
 
 def check_opm_difference(calculated_opm: float, source_opm: float) -> bool:
-    
+
     return abs(calculated_opm - source_opm) > 1
 
 
@@ -24,8 +21,8 @@ def return_on_equity(
     net_profit: float,
     equity_capital: float,
     reserves: float,
-) -> Optional[float]:
-    
+) -> float | None:
+
     equity = equity_capital + reserves
 
     if equity <= 0:
@@ -39,8 +36,8 @@ def return_on_capital_employed(
     equity_capital: float,
     reserves: float,
     borrowings: float,
-) -> Optional[float]:
-    
+) -> float | None:
+
     capital = equity_capital + reserves + borrowings
 
     if capital <= 0:
@@ -52,19 +49,20 @@ def return_on_capital_employed(
 def return_on_assets(
     net_profit: float,
     total_assets: float,
-) -> Optional[float]:
-    
+) -> float | None:
+
     if total_assets == 0:
         return None
 
     return round((net_profit / total_assets) * 100, 2)
+
 
 def debt_to_equity(
     borrowings: float,
     equity_capital: float,
     reserves: float,
 ):
-   
+
     if borrowings == 0:
         return 0
 
@@ -77,7 +75,7 @@ def debt_to_equity(
 
 
 def high_leverage_flag(de_ratio: float, sector: str) -> bool:
-    
+
     if sector.lower() == "financials":
         return False
 
@@ -89,7 +87,7 @@ def interest_coverage_ratio(
     other_income: float,
     interest: float,
 ):
-    
+
     if interest == 0:
         return None
 
@@ -97,15 +95,15 @@ def interest_coverage_ratio(
 
 
 def icr_label(icr):
-    
+
     if icr is None:
         return "Debt Free"
 
-    return 
+    return
 
 
 def icr_warning_flag(icr) -> bool:
-    
+
     if icr is None:
         return False
 
@@ -124,7 +122,7 @@ def asset_turnover(
     sales: float,
     total_assets: float,
 ):
-    
+
     if total_assets == 0:
         return None
 

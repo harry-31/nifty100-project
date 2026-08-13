@@ -1,6 +1,5 @@
 import streamlit as st
 
- 
 st.set_page_config(
     page_title="Nifty 100 Analytics",
     page_icon="📈",
@@ -13,13 +12,11 @@ st.set_page_config(
 # ----------------------------
 st.sidebar.title("📊 Nifty 100 Analytics")
 st.sidebar.markdown("---")
-st.sidebar.info(
-    """
+st.sidebar.info("""
     **Sprint 4 Dashboard**
 
     Navigate using the Pages menu on the left.
-    """
-)
+    """)
 
 # ----------------------------
 # Home Page

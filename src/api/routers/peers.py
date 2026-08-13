@@ -148,10 +148,6 @@ def compare_peers(ticker: str):
     return {
         "company": dict(company),
         "peer_group": group_name,
-        "peer_group_average": (
-            dict(zip(axes, peer_average))
-            if peer_average
-            else None
-        ),
+        "peer_group_average": (dict(zip(axes, peer_average)) if peer_average else None),
         "benchmark_company": None,
     }

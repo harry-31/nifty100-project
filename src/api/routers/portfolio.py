@@ -68,26 +68,18 @@ def portfolio_stats():
 
     # Convert all KPI columns to numeric
     for column in FEATURES:
-        df[column] = pd.to_numeric(
-            df[column],
-            errors="coerce"
-        )
+        df[column] = pd.to_numeric(df[column], errors="coerce")
 
     # TTM should be considered the newest period.
     # Historical years are ordered newest -> oldest.
     df["date_order"] = pd.to_datetime(
-        df["year"].replace({"TTM": None}),
-        errors="coerce"
+        df["year"].replace({"TTM": None}), errors="coerce"
     )
 
-    df["ttm_order"] = (
-        df["year"].eq("TTM")
-        .astype(int)
-    )
+    df["ttm_order"] = df["year"].eq("TTM").astype(int)
 
     df = df.sort_values(
-        ["company_id", "ttm_order", "date_order"],
-        ascending=[True, False, False]
+        ["company_id", "ttm_order", "date_order"], ascending=[True, False, False]
     )
 
     # For every company and every KPI:
@@ -109,19 +101,13 @@ def portfolio_stats():
 
         latest_values[company_id] = company_values
 
-    latest_df = pd.DataFrame.from_dict(
-        latest_values,
-        orient="index"
-    )
+    latest_df = pd.DataFrame.from_dict(latest_values, orient="index")
 
     result = {}
 
     for column in FEATURES:
 
-        values = pd.to_numeric(
-            latest_df[column],
-            errors="coerce"
-        ).dropna()
+        values = pd.to_numeric(latest_df[column], errors="coerce").dropna()
 
         if values.empty:
             result[column] = {
@@ -151,21 +137,19 @@ def portfolio_stats():
     stats_rows = []
 
     for metric, stats in result.items():
-        stats_rows.append({
-            "metric": metric,
-            "P10": stats["P10"],
-            "P25": stats["P25"],
-            "P50": stats["P50"],
-            "P75": stats["P75"],
-            "P90": stats["P90"],
-            "Mean": stats["Mean"],
-            "Std": stats["Std"],
-        })
+        stats_rows.append(
+            {
+                "metric": metric,
+                "P10": stats["P10"],
+                "P25": stats["P25"],
+                "P50": stats["P50"],
+                "P75": stats["P75"],
+                "P90": stats["P90"],
+                "Mean": stats["Mean"],
+                "Std": stats["Std"],
+            }
+        )
 
-    pd.DataFrame(stats_rows).to_csv(
-        output_dir / "portfolio_stats.csv",
-        index=False
-    )
+    pd.DataFrame(stats_rows).to_csv(output_dir / "portfolio_stats.csv", index=False)
 
     return result
-   

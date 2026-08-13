@@ -1,17 +1,8 @@
-import streamlit as st
 import plotly.express as px
+import streamlit as st
+from utils.db import get_companies, get_market_cap, get_ratios, get_sectors
 
-from utils.db import (
-    get_companies,
-    get_ratios,
-    get_market_cap,
-    get_sectors
-)
-
-st.set_page_config(
-    page_title="Nifty 100 Analytics",
-    layout="wide"
-)
+st.set_page_config(page_title="Nifty 100 Analytics", layout="wide")
 
 st.title("📈 Nifty 100 Analytics Dashboard")
 
@@ -21,15 +12,8 @@ st.title("📈 Nifty 100 Analytics Dashboard")
 
 year = st.sidebar.selectbox(
     "Select Financial Year",
-    [
-        "2019-03",
-        "2020-03",
-        "2021-03",
-        "2022-03",
-        "2023-03",
-        "2024-03"
-    ],
-    index=5
+    ["2019-03", "2020-03", "2021-03", "2022-03", "2023-03", "2024-03"],
+    index=5,
 )
 
 # =========================
@@ -50,25 +34,13 @@ sectors = get_sectors()
 
 total_companies = len(companies)
 
-avg_roe = (
-    round(ratios["return_on_equity_pct"].mean(), 2)
-    if not ratios.empty else 0
-)
+avg_roe = round(ratios["return_on_equity_pct"].mean(), 2) if not ratios.empty else 0
 
-median_de = (
-    round(ratios["debt_to_equity"].median(), 2)
-    if not ratios.empty else 0
-)
+median_de = round(ratios["debt_to_equity"].median(), 2) if not ratios.empty else 0
 
-median_rev = (
-    round(ratios["revenue_cagr"].median(), 2)
-    if not ratios.empty else 0
-)
+median_rev = round(ratios["revenue_cagr"].median(), 2) if not ratios.empty else 0
 
-debt_free = (
-    len(ratios[ratios["debt_to_equity"] <= 0])
-    if not ratios.empty else 0
-)
+debt_free = len(ratios[ratios["debt_to_equity"] <= 0]) if not ratios.empty else 0
 
 if not market.empty:
     median_pe = round(market["pe_ratio"].median(), 2)
@@ -100,18 +72,14 @@ st.subheader("📊 Sector Distribution")
 
 if not sectors.empty:
 
-    sector_count = (
-        sectors.groupby("broad_sector")
-        .size()
-        .reset_index(name="Companies")
-    )
+    sector_count = sectors.groupby("broad_sector").size().reset_index(name="Companies")
 
     fig = px.pie(
         sector_count,
         names="broad_sector",
         values="Companies",
         hole=0.45,
-        title="Companies by Broad Sector"
+        title="Companies by Broad Sector",
     )
 
     st.plotly_chart(fig, use_container_width=True)
@@ -145,19 +113,9 @@ if not ratios.empty:
         - top5["debt_to_equity"] * 10
     )
 
-    top5 = (
-        top5.sort_values(
-            by="quality_score",
-            ascending=False
-        )
-        .head(5)
-    )
+    top5 = top5.sort_values(by="quality_score", ascending=False).head(5)
 
-    top5 = top5.merge(
-        companies,
-        left_on="company_id",
-        right_on="id"
-    )
+    top5 = top5.merge(companies, left_on="company_id", right_on="id")
 
     top5["quality_score"] = top5["quality_score"].round(2)
 
@@ -168,10 +126,10 @@ if not ratios.empty:
                 "quality_score",
                 "return_on_equity_pct",
                 "debt_to_equity",
-                "revenue_cagr"
+                "revenue_cagr",
             ]
         ],
-        use_container_width=True
+        use_container_width=True,
     )
 
 else:

@@ -67,10 +67,7 @@ def get_companies(
                 OR c.id LIKE ?
             )
         """
-        params.extend([
-            f"%{search}%",
-            f"%{search}%"
-        ])
+        params.extend([f"%{search}%", f"%{search}%"])
 
     query += " ORDER BY c.id"
 
@@ -123,10 +120,7 @@ def get_company(ticker: str):
     conn.close()
 
     if not row:
-        raise HTTPException(
-            status_code=404,
-            detail="Company not found"
-        )
+        raise HTTPException(status_code=404, detail="Company not found")
 
     return dict(row)
 
@@ -150,10 +144,7 @@ def get_history(
 
     if not company:
         conn.close()
-        raise HTTPException(
-            status_code=404,
-            detail="Company not found"
-        )
+        raise HTTPException(status_code=404, detail="Company not found")
 
     query = f"""
         SELECT *
@@ -246,27 +237,17 @@ def company_ratios(
     conn.close()
 
     if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail="Company ratios not found"
-        )
+        raise HTTPException(status_code=404, detail="Company ratios not found")
 
     return [dict(row) for row in rows]
 
 
 @router.get("/companies/{ticker}/tearsheet")
 def company_tearsheet(ticker: str):
-    candidates = list(
-        TEARSHEET_DIR.glob(
-            f"*{ticker.upper()}*.pdf"
-        )
-    )
+    candidates = list(TEARSHEET_DIR.glob(f"*{ticker.upper()}*.pdf"))
 
     if not candidates:
-        raise HTTPException(
-            status_code=404,
-            detail="Tearsheet not found"
-        )
+        raise HTTPException(status_code=404, detail="Tearsheet not found")
 
     return FileResponse(
         candidates[0],

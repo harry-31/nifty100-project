@@ -1,9 +1,10 @@
 import sqlite3
 from pathlib import Path
+
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
 
 DB_PATH = Path("nifty100.db")
 
@@ -29,6 +30,8 @@ def load_financial_data():
     conn.close()
 
     return df
+
+
 def calculate_fcf_cagr(group):
     group = group.sort_values("year").reset_index(drop=True)
 
@@ -45,6 +48,8 @@ def calculate_fcf_cagr(group):
         return None
 
     return round(((end / start) ** (1 / 5) - 1) * 100, 2)
+
+
 def prepare_clustering_data(df):
     latest = df.groupby("company_id").tail(1).copy()
 
@@ -53,10 +58,7 @@ def prepare_clustering_data(df):
     for company_id, group in df.groupby("company_id"):
         cagr = calculate_fcf_cagr(group)
 
-        fcf_results.append({
-            "company_id": company_id,
-            "fcf_cagr_5yr": cagr
-        })
+        fcf_results.append({"company_id": company_id, "fcf_cagr_5yr": cagr})
 
     fcf_cagr = pd.DataFrame(fcf_results)
 
@@ -67,26 +69,15 @@ def prepare_clustering_data(df):
         "revenue_cagr",
     ]
 
-    latest = latest[
-        ["company_id"] + features
-    ]
+    latest = latest[["company_id"] + features]
 
-    result = latest.merge(
-        fcf_cagr,
-        on="company_id",
-        how="left"
-    )
+    result = latest.merge(fcf_cagr, on="company_id", how="left")
     sector_df = pd.read_sql_query(
-        "SELECT company_id, broad_sector FROM sectors",
-        sqlite3.connect(DB_PATH)
+        "SELECT company_id, broad_sector FROM sectors", sqlite3.connect(DB_PATH)
     )
     sector_df = sector_df.rename(columns={"broad_sector": "sector"})
 
-    result = result.merge(
-        sector_df,
-        on="company_id",
-        how="left"
-    )
+    result = result.merge(sector_df, on="company_id", how="left")
 
     cluster_features = [
         "return_on_equity_pct",
@@ -101,6 +92,8 @@ def prepare_clustering_data(df):
             lambda x: x.fillna(x.median())
         )
     return result
+
+
 def run_kmeans(clustering_data):
     cluster_features = [
         "return_on_equity_pct",
@@ -112,15 +105,9 @@ def run_kmeans(clustering_data):
 
     scaler = StandardScaler()
 
-    X = scaler.fit_transform(
-        clustering_data[cluster_features]
-    )
+    X = scaler.fit_transform(clustering_data[cluster_features])
 
-    kmeans = KMeans(
-        n_clusters=5,
-        random_state=42,
-        n_init=10
-    )
+    kmeans = KMeans(n_clusters=5, random_state=42, n_init=10)
 
     clustering_data = clustering_data.copy()
 
@@ -131,6 +118,7 @@ def run_kmeans(clustering_data):
     clustering_data["centroid_distance"] = distances.min(axis=1)
 
     return clustering_data, kmeans, scaler
+
 
 def create_elbow_plot(clustering_data):
     cluster_features = [
@@ -148,11 +136,7 @@ def create_elbow_plot(clustering_data):
     inertias = []
 
     for k in k_values:
-        model = KMeans(
-            n_clusters=k,
-            random_state=42,
-            n_init=10
-        )
+        model = KMeans(n_clusters=k, random_state=42, n_init=10)
         model.fit(X)
         inertias.append(model.inertia_)
 
@@ -169,15 +153,14 @@ def create_elbow_plot(clustering_data):
     plt.close()
 
     print("Saved: reports/elbow_plot.png")
-    
+
+
 if __name__ == "__main__":
     df = load_financial_data()
 
     clustering_data = prepare_clustering_data(df)
 
-    clustered_data, kmeans, scaler = run_kmeans(
-        clustering_data
-    )
+    clustered_data, kmeans, scaler = run_kmeans(clustering_data)
     output_dir = Path("output")
 output_dir.mkdir(exist_ok=True)
 
@@ -194,13 +177,10 @@ cluster_output = clustered_data[
     ]
 ]
 
-cluster_output.to_csv(
-    output_dir / "cluster_labels.csv",
-    index=False
-)
+cluster_output.to_csv(output_dir / "cluster_labels.csv", index=False)
 
 print("Saved:", output_dir / "cluster_labels.csv")
-    
+
 print("Cluster counts:")
 print(clustered_data["cluster_id"].value_counts().sort_index())
 

@@ -31,10 +31,7 @@ def get_documents(ticker: str):
             "year": row[0],
             "annual_report": row[1],
             "is_url_valid": bool(
-                row[1]
-                and str(row[1]).startswith(
-                    ("http://", "https://")
-                )
+                row[1] and str(row[1]).startswith(("http://", "https://"))
             ),
         }
         for row in rows

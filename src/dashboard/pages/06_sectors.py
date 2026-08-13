@@ -1,12 +1,11 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+import streamlit as st
 from utils.db import (
     get_companies,
-    get_ratios,
-    get_pl,
     get_market_cap,
+    get_pl,
+    get_ratios,
     get_sectors,
 )
 
@@ -37,11 +36,7 @@ def load_sector_data() -> pd.DataFrame:
     ratios = get_ratios()
     ratios = ratios[ratios["year"] != "TTM"]
 
-    latest_ratios = (
-        ratios.sort_values("year")
-        .groupby("company_id")
-        .tail(1)
-    )
+    latest_ratios = ratios.sort_values("year").groupby("company_id").tail(1)
 
     # -----------------------------
     # Latest Revenue
@@ -194,20 +189,13 @@ else:
 
 st.subheader("📊 Sector Median KPIs")
 
-available_kpis = [
-    c for c in KPI_COLUMNS.keys()
-    if c in sector_df.columns
-]
+available_kpis = [c for c in KPI_COLUMNS if c in sector_df.columns]
 
 if not available_kpis:
     st.info("No KPI data available.")
 else:
 
-    median_df = (
-        sector_df[available_kpis]
-        .median(numeric_only=True)
-        .reset_index()
-    )
+    median_df = sector_df[available_kpis].median(numeric_only=True).reset_index()
 
     median_df.columns = ["Metric", "Median"]
 

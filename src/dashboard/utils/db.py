@@ -6,7 +6,6 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-
 BASE_DIR = Path(__file__).resolve().parents[3]
 DB_PATH = BASE_DIR / "nifty100.db"
 
@@ -23,6 +22,7 @@ RATIOS_COLUMN_MAP = {
 # ---------------------------------------------------------------------------
 # Connection
 # ---------------------------------------------------------------------------
+
 
 @st.cache_resource(show_spinner=False)
 def _conn() -> sqlite3.Connection:
@@ -54,9 +54,11 @@ def _add_ticker(df: pd.DataFrame) -> pd.DataFrame:
         df["ticker"] = df["id"]
     return df
 
+
 # ---------------------------------------------------------------------------
 # Companies
 # ---------------------------------------------------------------------------
+
 
 @st.cache_data(ttl=600, show_spinner=False)
 def get_companies() -> pd.DataFrame:
@@ -83,8 +85,11 @@ def get_company(company_id: str) -> pd.DataFrame:
 # Financial Ratios
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
-def get_ratios(company_id: str | None = None, year: str | int | None = None) -> pd.DataFrame:
+def get_ratios(
+    company_id: str | None = None, year: str | int | None = None
+) -> pd.DataFrame:
     """
     Return financial ratio history, optionally scoped to one company
     and/or one year. `year` matches as a prefix (e.g. "2024" matches
@@ -112,6 +117,7 @@ def get_ratios(company_id: str | None = None, year: str | int | None = None) -> 
 # ---------------------------------------------------------------------------
 # Profit & Loss / Balance Sheet / Cash Flow
 # ---------------------------------------------------------------------------
+
 
 @st.cache_data(ttl=600, show_spinner=False)
 def get_pl(company_id: str) -> pd.DataFrame:
@@ -159,6 +165,7 @@ def get_cf(company_id: str) -> pd.DataFrame:
 # Market Cap / Valuation
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
 def get_market_cap(year: str | int | None = None) -> pd.DataFrame:
     """Return market cap rows, optionally scoped to one year."""
@@ -198,6 +205,7 @@ def get_valuation(company_id: str) -> pd.DataFrame:
 # Sectors / Peer Groups
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
 def get_sectors() -> pd.DataFrame:
     """Return all sector / sub-sector rows."""
@@ -227,6 +235,7 @@ def get_peers(peer_group_name: str | None = None) -> pd.DataFrame:
 # Pros & Cons (optional table — returns empty DataFrame if absent)
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
 def get_pros_cons(company_id: str) -> pd.DataFrame:
     """Return pros/cons rows for one company, if the table exists."""
@@ -243,6 +252,7 @@ def get_pros_cons(company_id: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Documents / Annual Reports
 # ---------------------------------------------------------------------------
+
 
 @st.cache_data(ttl=600, show_spinner=False)
 def get_documents(company_id: str) -> pd.DataFrame:
@@ -267,17 +277,18 @@ def get_annual_reports(company_id: str) -> pd.DataFrame:
     df = get_documents(company_id)
     if df.empty:
         return pd.DataFrame(columns=["year", "pdf_url"])
-    return df.rename(columns={"Year": "year", "Annual_Report": "pdf_url"})[["year", "pdf_url"]]
+    return df.rename(columns={"Year": "year", "Annual_Report": "pdf_url"})[
+        ["year", "pdf_url"]
+    ]
 
 
 # ---------------------------------------------------------------------------
 # Capital Allocation (optional table — returns empty DataFrame if absent)
 # ---------------------------------------------------------------------------
 
-@st.cache_data(ttl=600, show_spinner=False)
-def get_capital_allocation():
-    return pd.DataFrame(columns=["company_id", "pattern"])
 
+@st.cache_data(ttl=600, show_spinner=False)
+def get_capital_allocation(company_id=None):
     if company_id is not None:
         df = _read(
             """

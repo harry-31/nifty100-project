@@ -1,5 +1,7 @@
 import sqlite3
+
 import pandas as pd
+
 from src.etl.loader import load_excel
 
 conn = sqlite3.connect("nifty100.db")
@@ -30,7 +32,7 @@ cf.to_sql("cashflow", conn, if_exists="append", index=False)
 for table, file in {
     "analysis": "analysis.xlsx",
     "documents": "documents.xlsx",
-    "prosandcons": "prosandcons.xlsx"
+    "prosandcons": "prosandcons.xlsx",
 }.items():
     print(f"Loading {table}...")
     df = load_excel(f"data/raw/{file}")
@@ -43,7 +45,7 @@ support_files = {
     "financial_ratios": "financial_ratios.xlsx",
     "peer_groups": "peer_groups.xlsx",
     "sectors": "sectors.xlsx",
-    "stock_prices": "stock_prices.xlsx"
+    "stock_prices": "stock_prices.xlsx",
 }
 
 for table, file in support_files.items():

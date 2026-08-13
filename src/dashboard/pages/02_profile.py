@@ -1,15 +1,15 @@
-import streamlit as st
 import plotly.express as px
-import plotly.graph_objects as go
-
+import streamlit as st
 from utils.db import (
     get_companies,
     get_company,
-    get_ratios,
     get_pl,
     get_pros_cons,
-    get_sectors
+    get_ratios,
+    get_sectors,
 )
+
+
 def safe(value):
     try:
         if value is None:
@@ -22,11 +22,9 @@ def safe(value):
 
     except:
         return "N/A"
-    
-st.set_page_config(
-    page_title="Company Profile",
-    layout="wide"
-)
+
+
+st.set_page_config(page_title="Company Profile", layout="wide")
 
 st.title("🏢 Company Profile")
 
@@ -41,19 +39,13 @@ sectors = get_sectors()
 # Company Search
 # -------------------------
 
-company_name = st.selectbox(
-    "🔍 Search Company",
-    companies["company_name"].tolist()
-)
+company_name = st.selectbox("🔍 Search Company", companies["company_name"].tolist())
 
 if not company_name:
     st.warning("Ticker not found — please try another.")
     st.stop()
 
-company_id = companies.loc[
-    companies["company_name"] == company_name,
-    "id"
-].iloc[0]
+company_id = companies.loc[companies["company_name"] == company_name, "id"].iloc[0]
 
 company = get_company(company_id)
 ratios = get_ratios(company_id)
@@ -122,11 +114,7 @@ st.divider()
 # -------------------------
 if not ratios.empty:
 
-    latest = (
-        ratios[ratios["year"] != "TTM"]
-        .sort_values("year")
-        .iloc[-1]
-    )
+    latest = ratios[ratios["year"] != "TTM"].sort_values("year").iloc[-1]
 
     c1, c2, c3 = st.columns(3)
     c4, c5, c6 = st.columns(3)
@@ -161,34 +149,20 @@ if not pl.empty:
     with col1:
 
         fig = px.bar(
-            pl,
-            x="year",
-            y="sales",
-            title="Revenue (10 Years)",
-            text_auto=True
+            pl, x="year", y="sales", title="Revenue (10 Years)", text_auto=True
         )
 
-        fig.update_layout(
-            xaxis_title="Year",
-            yaxis_title="Revenue"
-        )
+        fig.update_layout(xaxis_title="Year", yaxis_title="Revenue")
 
         st.plotly_chart(fig, use_container_width=True)
 
     with col2:
 
         fig = px.bar(
-            pl,
-            x="year",
-            y="net_profit",
-            title="Net Profit (10 Years)",
-            text_auto=True
+            pl, x="year", y="net_profit", title="Net Profit (10 Years)", text_auto=True
         )
 
-        fig.update_layout(
-            xaxis_title="Year",
-            yaxis_title="Net Profit"
-        )
+        fig.update_layout(xaxis_title="Year", yaxis_title="Net Profit")
 
         st.plotly_chart(fig, use_container_width=True)
 
@@ -206,35 +180,22 @@ st.subheader("📊 ROE vs ROCE Trend")
 
 if not ratios.empty:
 
-    chart = (
-        ratios[ratios["year"] != "TTM"]
-        .sort_values("year")
-    )
+    chart = ratios[ratios["year"] != "TTM"].sort_values("year")
 
     fig = px.line(
-        chart,
-        x="year",
-        y="return_on_equity_pct",
-        markers=True,
-        title="ROE Trend"
+        chart, x="year", y="return_on_equity_pct", markers=True, title="ROE Trend"
     )
 
     fig.add_scatter(
         x=chart["year"],
         y=[info["roce_percentage"]] * len(chart),
         mode="lines+markers",
-        name="ROCE"
+        name="ROCE",
     )
 
-    fig.update_layout(
-        xaxis_title="Year",
-        yaxis_title="Percentage (%)"
-    )
+    fig.update_layout(xaxis_title="Year", yaxis_title="Percentage (%)")
 
-    st.plotly_chart(
-        fig,
-        use_container_width=True
-    )
+    st.plotly_chart(fig, use_container_width=True)
 
 else:
 

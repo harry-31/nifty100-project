@@ -28,10 +28,7 @@ def validate_foreign_key(child_df, parent_df):
 # ---------------- DQ-04 ----------------
 # Balance Sheet Check
 def validate_balance_sheet(df):
-    required = [
-        "total_liabilities",
-        "total_assets"
-    ]
+    required = ["total_liabilities", "total_assets"]
 
     if not all(col in df.columns for col in required):
         return pd.DataFrame()
@@ -45,20 +42,14 @@ def validate_balance_sheet(df):
 # ---------------- DQ-05 ----------------
 # OPM Cross Check
 def validate_opm(df):
-    required = [
-        "sales",
-        "operating_profit",
-        "opm_percentage"
-    ]
+    required = ["sales", "operating_profit", "opm_percentage"]
 
     if not all(col in df.columns for col in required):
         return pd.DataFrame()
 
     calc = (df["operating_profit"] / df["sales"]) * 100
 
-    return df[
-        (calc - df["opm_percentage"]).abs() > 1
-    ]
+    return df[(calc - df["opm_percentage"]).abs() > 1]
 
 
 # ---------------- DQ-06 ----------------

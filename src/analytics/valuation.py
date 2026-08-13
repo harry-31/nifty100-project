@@ -1,6 +1,6 @@
 import os
-import pandas as pd
 
+import pandas as pd
 
 # ============================================================
 # PATHS
@@ -28,17 +28,9 @@ SECTOR_FILE = os.path.join(DATA_DIR, "sectors.xlsx")
 # LOAD DATA
 # ============================================================
 
-companies = pd.read_excel(
-    COMPANY_FILE,
-    header=1
-)
+companies = pd.read_excel(COMPANY_FILE, header=1)
 
-companies.rename(
-    columns={
-        "id": "company_id"
-    },
-    inplace=True
-)
+companies.rename(columns={"id": "company_id"}, inplace=True)
 
 market = pd.read_excel(MARKET_CAP_FILE)
 
@@ -59,16 +51,12 @@ print("Sectors :", len(sectors))
 
 latest_year = market["year"].max()
 
-market = market[
-    market["year"] == latest_year
-].copy()
+market = market[market["year"] == latest_year].copy()
 
 
 latest_ratio_year = ratios["year"].max()
 
-ratios = ratios[
-    ratios["year"] == latest_ratio_year
-].copy()
+ratios = ratios[ratios["year"] == latest_ratio_year].copy()
 
 
 # ============================================================
@@ -164,31 +152,20 @@ valuation.fillna(0, inplace=True)
 # ============================================================
 
 valuation["FCF_yield_pct"] = (
-    valuation["free_cash_flow_cr"]
-    /
-    valuation["market_cap_crore"]
+    valuation["free_cash_flow_cr"] / valuation["market_cap_crore"]
 ) * 100
 
 
-valuation["FCF_yield_pct"] = (
-    valuation["FCF_yield_pct"]
-    .round(2)
-)
+valuation["FCF_yield_pct"] = valuation["FCF_yield_pct"].round(2)
 
 # ============================================================
 # SECTOR MEDIAN PE
 # ============================================================
 
-sector_median = (
-    valuation.groupby("broad_sector")["pe_ratio"]
-    .median()
-    .reset_index()
-)
+sector_median = valuation.groupby("broad_sector")["pe_ratio"].median().reset_index()
 
 sector_median.rename(
-    columns={
-        "pe_ratio": "sector_median_pe"
-    },
+    columns={"pe_ratio": "sector_median_pe"},
     inplace=True,
 )
 
@@ -204,24 +181,17 @@ valuation = valuation.merge(
 # ============================================================
 
 valuation["PE_vs_sector_median_pct"] = (
-    (
-        valuation["pe_ratio"]
-        -
-        valuation["sector_median_pe"]
-    )
-    /
-    valuation["sector_median_pe"]
+    (valuation["pe_ratio"] - valuation["sector_median_pe"])
+    / valuation["sector_median_pe"]
 ) * 100
 
-valuation["PE_vs_sector_median_pct"] = (
-    valuation["PE_vs_sector_median_pct"]
-    .round(2)
-)
+valuation["PE_vs_sector_median_pct"] = valuation["PE_vs_sector_median_pct"].round(2)
 
 
 # ============================================================
 # VALUATION FLAG
 # ============================================================
+
 
 def valuation_flag(row):
 
@@ -333,10 +303,7 @@ print("Companies Processed :", len(valuation_summary))
 
 print()
 
-print(
-    valuation_summary["flag"]
-    .value_counts()
-)
+print(valuation_summary["flag"].value_counts())
 
 print()
 

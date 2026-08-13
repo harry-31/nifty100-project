@@ -1,6 +1,7 @@
-﻿from pathlib import Path
+﻿import re
 import sqlite3
-import re
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -15,6 +16,7 @@ DISTRESS_FILE = OUTPUT / "distress_alerts.csv"
 # ============================================================
 # PUBLIC TESTED HELPERS
 # ============================================================
+
 
 def free_cash_flow(cfo, cfi):
     if cfo is None or cfi is None:
@@ -92,6 +94,7 @@ def capital_allocation_pattern(
 # HELPERS
 # ============================================================
 
+
 def normalize_year(value):
     if pd.isna(value):
         return np.nan
@@ -136,36 +139,35 @@ def get_sector_mapping(conn):
     columns = info["name"].tolist()
 
     id_col = next(
-        (
-            c for c in
-            ["company_id", "id", "ticker", "symbol"]
-            if c in columns
-        ),
+        (c for c in ["company_id", "id", "ticker", "symbol"] if c in columns),
         None,
     )
 
     sector_col = next(
         (
-            c for c in
-            ["sector", "sector_name", "sector_label",
-             "industry", "sector_type"]
+            c
+            for c in [
+                "sector",
+                "sector_name",
+                "sector_label",
+                "industry",
+                "sector_type",
+            ]
             if c in columns
         ),
         None,
     )
 
     if not id_col or not sector_col:
-        return pd.DataFrame(
-            columns=["company_id", "sector"]
-        )
+        return pd.DataFrame(columns=["company_id", "sector"])
 
     return pd.read_sql(
-        f'''
+        f"""
         SELECT
             "{id_col}" AS company_id,
             "{sector_col}" AS sector
         FROM sectors
-        ''',
+        """,
         conn,
     ).drop_duplicates("company_id")
 
@@ -203,9 +205,7 @@ def load_data():
 
     conn.close()
 
-    companies = companies.rename(
-        columns={"id": "company_id"}
-    )
+    companies = companies.rename(columns={"id": "company_id"})
 
     for df in [
         cashflow,
@@ -214,13 +214,9 @@ def load_data():
         ratios,
     ]:
         if "year" in df.columns:
-            df["year_num"] = df["year"].apply(
-                normalize_year
-            )
+            df["year_num"] = df["year"].apply(normalize_year)
 
-    sectors["company_id"] = (
-        sectors["company_id"].astype(str)
-    )
+    sectors["company_id"] = sectors["company_id"].astype(str)
 
     return (
         companies,
@@ -236,6 +232,7 @@ def load_data():
 # COMPANY CALCULATION
 # ============================================================
 
+
 def calculate_company_metrics(
     company_id,
     cashflow,
@@ -244,25 +241,11 @@ def calculate_company_metrics(
     ratios,
 ):
 
-    cf = cashflow[
-        cashflow["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    cf = cashflow[cashflow["company_id"].astype(str) == str(company_id)].copy()
 
-    pl = pnl[
-        pnl["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    pl = pnl[pnl["company_id"].astype(str) == str(company_id)].copy()
 
-    bs = balance[
-        balance["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
-
-    rr = ratios[
-        ratios["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    bs = balance[balance["company_id"].astype(str) == str(company_id)].copy()
 
     # --------------------------------------------------------
     # No cashflow data
@@ -285,28 +268,15 @@ def calculate_company_metrics(
             "latest_cfo": np.nan,
             "latest_cff": np.nan,
             "latest_net_profit": (
-                safe_float(
-                    pl.iloc[-1]["net_profit"]
-                )
-                if not pl.empty
-                else np.nan
+                safe_float(pl.iloc[-1]["net_profit"]) if not pl.empty else np.nan
             ),
         }
 
-    cf = (
-        cf.dropna(subset=["year_num"])
-        .sort_values("year_num")
-    )
+    cf = cf.dropna(subset=["year_num"]).sort_values("year_num")
 
-    pl = (
-        pl.dropna(subset=["year_num"])
-        .sort_values("year_num")
-    )
+    pl = pl.dropna(subset=["year_num"]).sort_values("year_num")
 
-    bs = (
-        bs.dropna(subset=["year_num"])
-        .sort_values("year_num")
-    )
+    bs = bs.dropna(subset=["year_num"]).sort_values("year_num")
 
     yearly = cf[
         [
@@ -326,16 +296,13 @@ def calculate_company_metrics(
         }
     )
 
-    pl_small = (
-        pl[
-            [
-                "year_num",
-                "sales",
-                "net_profit",
-            ]
+    pl_small = pl[
+        [
+            "year_num",
+            "sales",
+            "net_profit",
         ]
-        .drop_duplicates("year_num")
-    )
+    ].drop_duplicates("year_num")
 
     yearly = yearly.merge(
         pl_small,
@@ -345,15 +312,12 @@ def calculate_company_metrics(
 
     if not bs.empty:
 
-        bs_small = (
-            bs[
-                [
-                    "year_num",
-                    "borrowings",
-                ]
+        bs_small = bs[
+            [
+                "year_num",
+                "borrowings",
             ]
-            .drop_duplicates("year_num")
-        )
+        ].drop_duplicates("year_num")
 
         yearly = yearly.merge(
             bs_small,
@@ -364,35 +328,20 @@ def calculate_company_metrics(
     else:
         yearly["borrowings"] = np.nan
 
-    yearly["fcf"] = (
-        yearly["cfo"]
-        + yearly["cfi"]
-    )
+    yearly["fcf"] = yearly["cfo"] + yearly["cfi"]
 
     # --------------------------------------------------------
     # CFO Quality
     # --------------------------------------------------------
 
-    quality = yearly[
-        yearly["net_profit"].notna()
-        & (yearly["net_profit"] != 0)
-    ].copy()
+    quality = yearly[yearly["net_profit"].notna() & (yearly["net_profit"] != 0)].copy()
 
-    quality["cfo_pat_ratio"] = (
-        quality["cfo"]
-        / quality["net_profit"]
-    )
+    quality["cfo_pat_ratio"] = quality["cfo"] / quality["net_profit"]
 
-    quality = (
-        quality
-        .replace(
-            [np.inf, -np.inf],
-            np.nan,
-        )
-        .dropna(
-            subset=["cfo_pat_ratio"]
-        )
-    )
+    quality = quality.replace(
+        [np.inf, -np.inf],
+        np.nan,
+    ).dropna(subset=["cfo_pat_ratio"])
 
     quality_5 = quality.tail(5)
 
@@ -403,9 +352,7 @@ def calculate_company_metrics(
 
     else:
 
-        quality_average = quality_5[
-            "cfo_pat_ratio"
-        ].mean()
+        quality_average = quality_5["cfo_pat_ratio"].mean()
 
         if quality_average > 1:
             quality_label = "High Quality"
@@ -420,56 +367,34 @@ def calculate_company_metrics(
 
     latest = yearly.iloc[-1]
 
-    latest_year = int(
-        latest["year_num"]
-    )
+    latest_year = int(latest["year_num"])
 
-    latest_cfo = safe_float(
-        latest["cfo"]
-    )
+    latest_cfo = safe_float(latest["cfo"])
 
-    latest_cfi = safe_float(
-        latest["cfi"]
-    )
+    latest_cfi = safe_float(latest["cfi"])
 
-    latest_cff = safe_float(
-        latest["cff"]
-    )
+    latest_cff = safe_float(latest["cff"])
 
-    latest_sales = safe_float(
-        latest["sales"]
-    )
+    latest_sales = safe_float(latest["sales"])
 
-    latest_profit = safe_float(
-        latest["net_profit"]
-    )
+    latest_profit = safe_float(latest["net_profit"])
 
-    latest_fcf = safe_float(
-        latest["fcf"]
-    )
+    latest_fcf = safe_float(latest["fcf"])
 
     # --------------------------------------------------------
     # CapEx
     # --------------------------------------------------------
 
-    capex_value, capex_label = (
-        capex_intensity(
-            latest_cfi,
-            latest_sales,
-        )
+    capex_value, capex_label = capex_intensity(
+        latest_cfi,
+        latest_sales,
     )
 
     # --------------------------------------------------------
     # FCF CAGR
     # --------------------------------------------------------
 
-    history = (
-        yearly[
-            ["year_num", "fcf"]
-        ]
-        .dropna()
-        .sort_values("year_num")
-    )
+    history = yearly[["year_num", "fcf"]].dropna().sort_values("year_num")
 
     fcf_cagr_5yr = np.nan
 
@@ -485,21 +410,16 @@ def calculate_company_metrics(
     # FCF Conversion
     # --------------------------------------------------------
 
-    fcf_conversion = (
-        fcf_conversion_rate(
-            latest_fcf,
-            latest_profit,
-        )
+    fcf_conversion = fcf_conversion_rate(
+        latest_fcf,
+        latest_profit,
     )
 
     # --------------------------------------------------------
     # Distress
     # --------------------------------------------------------
 
-    distress = bool(
-        latest_cfo < 0
-        and latest_cff > 0
-    )
+    distress = bool(latest_cfo < 0 and latest_cff > 0)
 
     # --------------------------------------------------------
     # Deleveraging
@@ -509,13 +429,9 @@ def calculate_company_metrics(
 
     if len(yearly) >= 2:
 
-        latest_borrowings = safe_float(
-            latest["borrowings"]
-        )
+        latest_borrowings = safe_float(latest["borrowings"])
 
-        previous_borrowings = safe_float(
-            yearly.iloc[-2]["borrowings"]
-        )
+        previous_borrowings = safe_float(yearly.iloc[-2]["borrowings"])
 
         if (
             not pd.isna(latest_borrowings)
@@ -531,11 +447,7 @@ def calculate_company_metrics(
 
     ratio = None
 
-    if (
-        not pd.isna(latest_cfo)
-        and not pd.isna(latest_profit)
-        and latest_profit != 0
-    ):
+    if not pd.isna(latest_cfo) and not pd.isna(latest_profit) and latest_profit != 0:
         ratio = latest_cfo / latest_profit
 
     pattern = capital_allocation_pattern(
@@ -567,6 +479,7 @@ def calculate_company_metrics(
 # MAIN
 # ============================================================
 
+
 def main():
 
     print("Loading Day 31 data...")
@@ -580,30 +493,17 @@ def main():
         sectors,
     ) = load_data()
 
-    print(
-        f"Companies in master table: {len(companies)}"
-    )
+    print(f"Companies in master table: {len(companies)}")
 
-    print(
-        f"Cashflow companies: "
-        f"{cashflow.company_id.nunique()}"
-    )
+    print(f"Cashflow companies: " f"{cashflow.company_id.nunique()}")
 
-    print(
-        f"P&L companies: "
-        f"{pnl.company_id.nunique()}"
-    )
+    print(f"P&L companies: " f"{pnl.company_id.nunique()}")
 
-    print(
-        f"Balance sheet companies: "
-        f"{balance.company_id.nunique()}"
-    )
+    print(f"Balance sheet companies: " f"{balance.company_id.nunique()}")
 
     results = []
 
-    for company_id in companies[
-        "company_id"
-    ].astype(str):
+    for company_id in companies["company_id"].astype(str):
 
         result = calculate_company_metrics(
             company_id,
@@ -629,11 +529,7 @@ def main():
         how="left",
     )
 
-    output["sector"] = (
-        output["sector"]
-        .fillna("Unknown")
-        .astype(str)
-    )
+    output["sector"] = output["sector"].fillna("Unknown").astype(str)
 
     columns = [
         "company_id",
@@ -649,9 +545,7 @@ def main():
         "capital_allocation_label",
     ]
 
-    output = output[
-        columns
-    ].sort_values("company_id")
+    output = output[columns].sort_values("company_id")
 
     output[
         [
@@ -667,7 +561,9 @@ def main():
             "fcf_cagr_5yr",
             "fcf_conversion_pct",
         ]
-    ].round(2)
+    ].round(
+        2
+    )
 
     output.to_excel(
         INTELLIGENCE_FILE,
@@ -677,9 +573,7 @@ def main():
     # Distress alerts
     distress = pd.DataFrame(results)
 
-    distress = distress[
-        distress["distress_flag"] == True
-    ].copy()
+    distress = distress[distress["distress_flag"] == True].copy()
 
     distress = distress.merge(
         output[
@@ -728,57 +622,33 @@ def main():
 
     print(
         "Required columns present:",
-        all(
-            c in output.columns
-            for c in columns
-        ),
+        all(c in output.columns for c in columns),
     )
 
-    print(
-        "\nInsufficient Data companies:"
-    )
+    print("\nInsufficient Data companies:")
 
     print(
-        output[
-            output["cfo_quality_label"]
-            == "Insufficient Data"
-        ][
+        output[output["cfo_quality_label"] == "Insufficient Data"][
             ["company_id", "sector"]
         ].to_string(index=False)
     )
 
-    print(
-        "\nCFO Quality:"
-    )
+    print("\nCFO Quality:")
 
-    print(
-        output[
-            "cfo_quality_label"
-        ].value_counts().to_string()
-    )
+    print(output["cfo_quality_label"].value_counts().to_string())
 
-    print(
-        "\nCapEx:"
-    )
+    print("\nCapEx:")
 
-    print(
-        output[
-            "capex_label"
-        ].value_counts().to_string()
-    )
+    print(output["capex_label"].value_counts().to_string())
 
     print(
         "\nDistress signals:",
-        int(
-            output["distress_flag"].sum()
-        ),
+        int(output["distress_flag"].sum()),
     )
 
     print(
         "Deleveraging:",
-        int(
-            output["deleveraging_flag"].sum()
-        ),
+        int(output["deleveraging_flag"].sum()),
     )
 
     print(
@@ -791,17 +661,10 @@ def main():
         DISTRESS_FILE,
     )
 
-    if (
-        len(output) == 92
-        and output["company_id"].nunique() == 92
-    ):
-        print(
-            "\nSTATUS: DAY 31 COMPLETE"
-        )
+    if len(output) == 92 and output["company_id"].nunique() == 92:
+        print("\nSTATUS: DAY 31 COMPLETE")
     else:
-        print(
-            "\nSTATUS: DAY 31 INCOMPLETE"
-        )
+        print("\nSTATUS: DAY 31 INCOMPLETE")
 
 
 if __name__ == "__main__":

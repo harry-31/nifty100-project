@@ -1,9 +1,9 @@
 from src.analytics.cashflow_kpis import (
-    free_cash_flow,
-    cfo_quality_score,
     capex_intensity,
+    capital_allocation_pattern,
+    cfo_quality_score,
     fcf_conversion_rate,
-    capital_allocation_pattern
+    free_cash_flow,
 )
 
 
@@ -58,57 +58,31 @@ def test_fcf_conversion_zero_profit():
 
 
 def test_shareholder_returns():
-    assert capital_allocation_pattern(
-        100,
-        -50,
-        -30,
-        cfo_pat_ratio=1.5
-    ) == "Shareholder Returns"
+    assert (
+        capital_allocation_pattern(100, -50, -30, cfo_pat_ratio=1.5)
+        == "Shareholder Returns"
+    )
 
 
 def test_liquidating_assets():
-    assert capital_allocation_pattern(
-        100,
-        50,
-        -30
-    ) == "Liquidating Assets"
+    assert capital_allocation_pattern(100, 50, -30) == "Liquidating Assets"
 
 
 def test_distress_signal():
-    assert capital_allocation_pattern(
-        -100,
-        50,
-        20
-    ) == "Distress Signal"
+    assert capital_allocation_pattern(-100, 50, 20) == "Distress Signal"
 
 
 def test_growth_funded_by_debt():
-    assert capital_allocation_pattern(
-        -100,
-        -50,
-        40
-    ) == "Growth Funded by Debt"
+    assert capital_allocation_pattern(-100, -50, 40) == "Growth Funded by Debt"
 
 
 def test_cash_accumulator():
-    assert capital_allocation_pattern(
-        100,
-        50,
-        40
-    ) == "Cash Accumulator"
+    assert capital_allocation_pattern(100, 50, 40) == "Cash Accumulator"
 
 
 def test_pre_revenue():
-    assert capital_allocation_pattern(
-        -100,
-        -50,
-        -40
-    ) == "Pre-Revenue"
+    assert capital_allocation_pattern(-100, -50, -40) == "Pre-Revenue"
 
 
 def test_mixed():
-    assert capital_allocation_pattern(
-        100,
-        -50,
-        40
-    ) == "Mixed"
+    assert capital_allocation_pattern(100, -50, 40) == "Mixed"

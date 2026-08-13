@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 def normalize_ticker(value):
     if pd.isna(value):
         return None

@@ -1,13 +1,12 @@
-import pytest
-
 from src.analytics.ratios import (
+    check_opm_difference,
     net_profit_margin,
     operating_profit_margin,
-    check_opm_difference,
-    return_on_equity,
-    return_on_capital_employed,
     return_on_assets,
+    return_on_capital_employed,
+    return_on_equity,
 )
+
 
 def test_net_profit_margin_normal():
     assert net_profit_margin(200, 1000) == 20.00
@@ -15,6 +14,7 @@ def test_net_profit_margin_normal():
 
 def test_net_profit_margin_zero_sales():
     assert net_profit_margin(200, 0) is None
+
 
 def test_operating_profit_margin_normal():
     assert operating_profit_margin(250, 1000) == 25.00
@@ -31,21 +31,21 @@ def test_return_on_equity_normal():
 def test_return_on_equity_negative_equity():
     assert return_on_equity(200, -500, 300) is None
 
+
 def test_return_on_capital_employed_normal():
     assert return_on_capital_employed(300, 500, 500, 500) == 20.00
+
 
 def test_return_on_assets_zero_assets():
     assert return_on_assets(100, 0) is None
 
 
 from src.analytics.ratios import (
+    asset_turnover,
     debt_to_equity,
     high_leverage_flag,
-    interest_coverage_ratio,
     icr_label,
-    icr_warning_flag,
-    net_debt,
-    asset_turnover,
+    interest_coverage_ratio,
 )
 
 

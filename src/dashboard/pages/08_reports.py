@@ -1,7 +1,6 @@
-import streamlit as st
 import pandas as pd
-
-from utils.db import get_companies, get_annual_reports
+import streamlit as st
+from utils.db import get_annual_reports, get_companies
 
 st.set_page_config(page_title="Annual Reports", layout="wide")
 
@@ -34,17 +33,13 @@ selected_company = st.selectbox(
     companies_df["display"],
 )
 
-selected_row = companies_df[
-    companies_df["display"] == selected_company
-].iloc[0]
+selected_row = companies_df[companies_df["display"] == selected_company].iloc[0]
 
 company_id = selected_row["id"]
 
 st.divider()
 
-st.subheader(
-    f"📄 {selected_row['company_name']} — Annual Reports"
-)
+st.subheader(f"📄 {selected_row['company_name']} — Annual Reports")
 
 reports = get_annual_reports(company_id)
 
@@ -52,10 +47,7 @@ if reports.empty:
     st.info("No annual reports available.")
     st.stop()
 
-reports = reports.sort_values(
-    by="year",
-    ascending=False
-)
+reports = reports.sort_values(by="year", ascending=False)
 
 for _, row in reports.iterrows():
 
@@ -81,6 +73,4 @@ for _, row in reports.iterrows():
 
 st.divider()
 
-st.caption(
-    "Annual report links are fetched from the database."
-)
+st.caption("Annual report links are fetched from the database.")

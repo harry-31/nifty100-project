@@ -12,8 +12,7 @@ DB_PATH = Path(__file__).resolve().parents[3] / "nifty100.db"
 def get_sectors():
     conn = sqlite3.connect(DB_PATH)
 
-    rows = conn.execute(
-        """
+    rows = conn.execute("""
         SELECT
             s.broad_sector,
             COUNT(DISTINCT s.company_id) AS company_count,
@@ -40,8 +39,7 @@ def get_sectors():
 
         GROUP BY s.broad_sector
         ORDER BY s.broad_sector
-        """
-    ).fetchall()
+        """).fetchall()
 
     conn.close()
 

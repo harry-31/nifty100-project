@@ -1,7 +1,9 @@
 import pytest
-from src.etl.normaliser import normalize_year, normalize_ticker
+
+from src.etl.normaliser import normalize_ticker, normalize_year
 
 # ---------------- normalize_year (20 tests) ----------------
+
 
 @pytest.mark.parametrize(
     "input_year, expected",
@@ -26,13 +28,14 @@ from src.etl.normaliser import normalize_year, normalize_ticker
         ("Dec-24", "2024-12"),
         ("TTM", "TTM"),
         (None, None),
-    ]
+    ],
 )
 def test_normalize_year(input_year, expected):
     assert normalize_year(input_year) == expected
 
 
 # ---------------- normalize_ticker (15 tests) ----------------
+
 
 @pytest.mark.parametrize(
     "ticker, expected",
@@ -52,7 +55,7 @@ def test_normalize_year(input_year, expected):
         ("  ", ""),
         (123, "123"),
         (None, None),
-    ]
+    ],
 )
 def test_normalize_ticker(ticker, expected):
     assert normalize_ticker(ticker) == expected

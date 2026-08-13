@@ -1,7 +1,8 @@
-import sqlite3
-import pandas as pd
 import re
+import sqlite3
 from pathlib import Path
+
+import pandas as pd
 
 DB_PATH = Path(__file__).resolve().parents[2] / "nifty100.db"
 
@@ -36,11 +37,11 @@ def calculate_peer_rankings():
 
     # Quality score
     df["quality_score"] = (
-        df["return_on_equity_pct"] * 0.30 +
-        df["operating_profit_margin_pct"] * 0.20 +
-        df["revenue_cagr"] * 0.20 +
-        df["pat_cagr"] * 0.20 +
-        df["interest_coverage"] * 0.10
+        df["return_on_equity_pct"] * 0.30
+        + df["operating_profit_margin_pct"] * 0.20
+        + df["revenue_cagr"] * 0.20
+        + df["pat_cagr"] * 0.20
+        + df["interest_coverage"] * 0.10
     )
 
     # Helper to determine latest record
@@ -61,26 +62,22 @@ def calculate_peer_rankings():
 
     df = (
         df.sort_values("sort_year")
-          .groupby("company_id", as_index=False)
-          .last()
-          .drop(columns="sort_year")
+        .groupby("company_id", as_index=False)
+        .last()
+        .drop(columns="sort_year")
     )
 
     # Rank within peer group
-    df["peer_rank"] = (
-        df.groupby("peer_group_name")["quality_score"]
-          .rank(method="dense", ascending=False)
+    df["peer_rank"] = df.groupby("peer_group_name")["quality_score"].rank(
+        method="dense", ascending=False
     )
 
     # Percentile
     df["peer_percentile"] = (
-        df.groupby("peer_group_name")["quality_score"]
-          .rank(pct=True) * 100
+        df.groupby("peer_group_name")["quality_score"].rank(pct=True) * 100
     ).round(2)
 
-    return df.sort_values(
-        ["peer_group_name", "peer_rank"]
-    )
+    return df.sort_values(["peer_group_name", "peer_rank"])
 
 
 def export_peer_comparison(filename="output/peer_comparison.xlsx"):
@@ -95,28 +92,16 @@ def export_peer_comparison(filename="output/peer_comparison.xlsx"):
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     green_fill = PatternFill(
-        start_color="C6EFCE",
-        end_color="C6EFCE",
-        fill_type="solid"
+        start_color="C6EFCE", end_color="C6EFCE", fill_type="solid"
     )
 
     yellow_fill = PatternFill(
-        start_color="FFEB9C",
-        end_color="FFEB9C",
-        fill_type="solid"
+        start_color="FFEB9C", end_color="FFEB9C", fill_type="solid"
     )
 
-    red_fill = PatternFill(
-        start_color="FFC7CE",
-        end_color="FFC7CE",
-        fill_type="solid"
-    )
+    red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid")
 
-    gold_fill = PatternFill(
-        start_color="FFD966",
-        end_color="FFD966",
-        fill_type="solid"
-    )
+    gold_fill = PatternFill(start_color="FFD966", end_color="FFD966", fill_type="solid")
 
     with pd.ExcelWriter(output_path, engine="openpyxl") as writer:
 
@@ -131,22 +116,15 @@ def export_peer_comparison(filename="output/peer_comparison.xlsx"):
                 if pd.api.types.is_numeric_dtype(group_df[column]):
                     median_row[column] = group_df[column].median()
                 else:
-                    median_row[column] = (
-                        "Median" if column == "company_id" else ""
-                    )
+                    median_row[column] = "Median" if column == "company_id" else ""
 
             group_df = pd.concat(
-                [group_df, pd.DataFrame([median_row])],
-                ignore_index=True
+                [group_df, pd.DataFrame([median_row])], ignore_index=True
             )
 
             sheet_name = str(group_name)[:31]
 
-            group_df.to_excel(
-                writer,
-                sheet_name=sheet_name,
-                index=False
-            )
+            group_df.to_excel(writer, sheet_name=sheet_name, index=False)
 
             worksheet = writer.sheets[sheet_name]
 

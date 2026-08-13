@@ -29,9 +29,7 @@ def health():
 
     for table in tables:
         try:
-            counts[table] = conn.execute(
-                f"SELECT COUNT(*) FROM {table}"
-            ).fetchone()[0]
+            counts[table] = conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
         except sqlite3.Error:
             counts[table] = 0
 

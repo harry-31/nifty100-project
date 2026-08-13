@@ -4,7 +4,6 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 DB_PATH = Path("nifty100.db")
 
 FEATURES = [
@@ -58,9 +57,7 @@ def create_kpi_correlation_heatmap():
         errors="coerce",
     )
 
-    df["ttm_order"] = (
-        df["year"].eq("TTM").astype(int)
-    )
+    df["ttm_order"] = df["year"].eq("TTM").astype(int)
 
     df = df.sort_values(
         ["company_id", "ttm_order", "date_order"],
@@ -100,9 +97,7 @@ def create_kpi_correlation_heatmap():
         FEATURES,
     )
 
-    plt.title(
-        "Nifty100 Financial KPI Pearson Correlation Heatmap"
-    )
+    plt.title("Nifty100 Financial KPI Pearson Correlation Heatmap")
 
     plt.tight_layout()
 

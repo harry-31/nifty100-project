@@ -1,6 +1,5 @@
-import pandas as pd
 import matplotlib.pyplot as plt
-
+import pandas as pd
 
 CLUSTER_FILE = "output/cluster_labels.csv"
 
@@ -26,31 +25,18 @@ def create_correlation_heatmap():
     plt.imshow(correlation, aspect="auto")
     plt.colorbar(label="Correlation")
 
-    plt.xticks(
-        range(len(FEATURES)),
-        FEATURES,
-        rotation=45,
-        ha="right"
-    )
+    plt.xticks(range(len(FEATURES)), FEATURES, rotation=45, ha="right")
 
-    plt.yticks(
-        range(len(FEATURES)),
-        FEATURES
-    )
+    plt.yticks(range(len(FEATURES)), FEATURES)
 
     plt.title("Clustering Feature Correlation")
     plt.tight_layout()
 
-    plt.savefig(
-        "reports/clustering_correlation_heatmap.png",
-        dpi=150
-    )
+    plt.savefig("reports/clustering_correlation_heatmap.png", dpi=150)
 
     plt.close()
 
-    print(
-        "Saved: reports/clustering_correlation_heatmap.png"
-    )
+    print("Saved: reports/clustering_correlation_heatmap.png")
 
 
 if __name__ == "__main__":

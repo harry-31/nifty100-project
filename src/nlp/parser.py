@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 # --------------------------------------------------
 # Paths
 # --------------------------------------------------
@@ -46,6 +45,7 @@ CAGR_METRIC_MAP = {
 # Parser
 # --------------------------------------------------
 
+
 def parse_metric(text):
     """
     Parse values such as:
@@ -82,6 +82,7 @@ def parse_metric(text):
 # Same rules as src/analytics/cagr.py
 # --------------------------------------------------
 
+
 def calculate_cagr(start_value, end_value, years):
 
     if years <= 0:
@@ -91,9 +92,7 @@ def calculate_cagr(start_value, end_value, years):
         return None
 
     if start_value > 0 and end_value > 0:
-        cagr = (
-            (end_value / start_value) ** (1 / years) - 1
-        ) * 100
+        cagr = ((end_value / start_value) ** (1 / years) - 1) * 100
 
         return round(cagr, 2)
 
@@ -105,6 +104,7 @@ def calculate_cagr(start_value, end_value, years):
 # --------------------------------------------------
 # Ratio Engine cross-validation
 # --------------------------------------------------
+
 
 def load_financial_history():
 
@@ -147,15 +147,11 @@ def compute_period_cagr(
     5 periods before it.
     """
 
-    company_data = financial_df[
-        financial_df["company_id"] == company_id
-    ].copy()
+    company_data = financial_df[financial_df["company_id"] == company_id].copy()
 
     company_data = company_data.sort_values("year")
 
-    company_data = company_data.dropna(
-        subset=[metric_column]
-    )
+    company_data = company_data.dropna(subset=[metric_column])
 
     required_rows = period_years + 1
 
@@ -208,28 +204,17 @@ def cross_validate_cagr(parsed_df):
 
         parsed_value = float(row["value_pct"])
 
-        divergence = abs(
-            parsed_value - computed_cagr
-        )
+        divergence = abs(parsed_value - computed_cagr)
 
-        parsed_df.at[
-            index,
-            "computed_cagr_pct"
-        ] = computed_cagr
+        parsed_df.at[index, "computed_cagr_pct"] = computed_cagr
 
-        parsed_df.at[
-            index,
-            "divergence_pct"
-        ] = round(divergence, 2)
+        parsed_df.at[index, "divergence_pct"] = round(divergence, 2)
 
         # Requirement:
         # flag divergence greater than 5%
         if divergence > 5:
 
-            parsed_df.at[
-                index,
-                "manual_review"
-            ] = True
+            parsed_df.at[index, "manual_review"] = True
 
             review_rows.append(
                 {
@@ -264,6 +249,7 @@ def cross_validate_cagr(parsed_df):
 # Main processing
 # --------------------------------------------------
 
+
 def main():
 
     print("Reading analysis.xlsx...")
@@ -283,15 +269,11 @@ def main():
     ]
 
     missing_columns = [
-        column
-        for column in required_columns
-        if column not in df.columns
+        column for column in required_columns if column not in df.columns
     ]
 
     if missing_columns:
-        raise ValueError(
-            f"Missing required columns: {missing_columns}"
-        )
+        raise ValueError(f"Missing required columns: {missing_columns}")
 
     parsed_rows = []
     failure_rows = []
@@ -358,9 +340,7 @@ def main():
 
     print("Cross-validating CAGR values...")
 
-    parsed_df, divergence_df = (
-        cross_validate_cagr(parsed_df)
-    )
+    parsed_df, divergence_df = cross_validate_cagr(parsed_df)
 
     # --------------------------------------------------
     # Save outputs
@@ -372,16 +352,16 @@ def main():
     )
 
     parsed_df[
-    [
-        "company_id",
-        "metric_type",
-        "period_years",
-        "value_pct",
-    ]
-].to_csv(
-    PARSED_FILE,
-    index=False,
-)
+        [
+            "company_id",
+            "metric_type",
+            "period_years",
+            "value_pct",
+        ]
+    ].to_csv(
+        PARSED_FILE,
+        index=False,
+    )
 
     failures_df.to_csv(
         FAILURE_FILE,
@@ -397,18 +377,12 @@ def main():
     # Summary
     # --------------------------------------------------
 
-    total_entries = (
-        len(df) * len(TARGET_FIELDS)
-    )
+    total_entries = len(df) * len(TARGET_FIELDS)
 
     parsed_count = len(parsed_df)
     failure_count = len(failures_df)
 
-    validated_count = (
-        parsed_df["computed_cagr_pct"]
-        .notna()
-        .sum()
-    )
+    validated_count = parsed_df["computed_cagr_pct"].notna().sum()
 
     review_count = len(divergence_df)
 

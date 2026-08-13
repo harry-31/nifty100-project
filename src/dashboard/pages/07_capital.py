@@ -1,7 +1,6 @@
-import streamlit as st
 import pandas as pd
 import plotly.express as px
-
+import streamlit as st
 from utils.db import get_capital_allocation
 
 st.set_page_config(page_title="Capital Allocation Map", layout="wide")
@@ -37,7 +36,7 @@ This page requires a table like:
 Since your database doesn't contain this table, this page cannot generate the treemap.
 """)
     st.stop()
-    
+
 pattern_counts = df["pattern"].value_counts().reset_index()
 pattern_counts.columns = ["pattern", "company_count"]
 
@@ -55,7 +54,7 @@ fig = px.treemap(
     title="Capital Allocation Patterns — 92 Companies",
 )
 fig.update_traces(root_color="lightgrey")
-fig.update_layout(margin=dict(t=50, l=10, r=10, b=10))
+fig.update_layout(margin={"t": 50, "l": 10, "r": 10, "b": 10})
 
 selection = st.plotly_chart(
     fig,
@@ -85,9 +84,13 @@ if selection and selection.get("selection", {}).get("points"):
 
 if clicked_label:
     st.subheader(f"📋 Companies — {clicked_label}")
-    subset = df[df["pattern"] == clicked_label][["company_name", "ticker", "broad_sector"]]
+    subset = df[df["pattern"] == clicked_label][
+        ["company_name", "ticker", "broad_sector"]
+    ]
     subset.columns = ["Company", "Ticker", "Sector"]
-    st.dataframe(subset.sort_values("Company"), use_container_width=True, hide_index=True)
+    st.dataframe(
+        subset.sort_values("Company"), use_container_width=True, hide_index=True
+    )
 else:
     st.info("Click a pattern or company tile above to see its full company list.")
 

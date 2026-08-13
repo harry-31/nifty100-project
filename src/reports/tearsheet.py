@@ -1,40 +1,30 @@
-from pathlib import Path
-import sqlite3
 import re
+import sqlite3
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+from reportlab.graphics.charts.barcharts import VerticalBarChart
+from reportlab.graphics.charts.linecharts import HorizontalLineChart
+from reportlab.graphics.shapes import (
+    Drawing,
+    Line,
+    Rect,
+    String,
+)
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
-
-from reportlab.graphics.shapes import (
-    Drawing,
-    Rect,
-    String,
-    Line,
-)
-
-from reportlab.graphics.charts.barcharts import (
-    VerticalBarChart
-)
-
-from reportlab.graphics.charts.linecharts import (
-    HorizontalLineChart
-)
-
 
 # ============================================================
 # PATHS
@@ -46,10 +36,7 @@ DB_PATH = ROOT / "nifty100.db"
 
 OUTPUT = ROOT / "reports" / "tearsheets"
 
-OUTPUT.mkdir(
-    parents=True,
-    exist_ok=True
-)
+OUTPUT.mkdir(parents=True, exist_ok=True)
 
 
 # ============================================================
@@ -141,6 +128,7 @@ print("Tearsheet module loaded")
 # GENERAL HELPERS
 # ============================================================
 
+
 def safe_float(value):
     try:
         if pd.isna(value):
@@ -171,8 +159,7 @@ def normalize_year(value):
         return int(years[-1])
 
     match = re.search(
-        r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)"
-        r"[-_ ](\d{2})$",
+        r"(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)" r"[-_ ](\d{2})$",
         text,
         re.IGNORECASE,
     )
@@ -192,20 +179,12 @@ def first_existing(columns, candidates):
 
 
 def get_columns(conn, table):
-    return [
-        row[1]
-        for row in conn.execute(
-            f'PRAGMA table_info("{table}")'
-        ).fetchall()
-    ]
+    return [row[1] for row in conn.execute(f'PRAGMA table_info("{table}")').fetchall()]
 
 
 def query_table(conn, table, company_id):
 
-    columns = get_columns(
-        conn,
-        table
-    )
+    columns = get_columns(conn, table)
 
     id_col = first_existing(
         columns,
@@ -221,11 +200,11 @@ def query_table(conn, table, company_id):
         return pd.DataFrame()
 
     return pd.read_sql(
-        f'''
+        f"""
         SELECT *
         FROM "{table}"
         WHERE "{id_col}" = ?
-        ''',
+        """,
         conn,
         params=[company_id],
     )
@@ -235,11 +214,10 @@ def query_table(conn, table, company_id):
 # COMPANY DATA LOADER
 # ============================================================
 
+
 def load_company(company_id):
 
-    conn = sqlite3.connect(
-        DB_PATH
-    )
+    conn = sqlite3.connect(DB_PATH)
 
     company = pd.read_sql(
         """
@@ -254,9 +232,7 @@ def load_company(company_id):
     if company.empty:
         conn.close()
 
-        raise ValueError(
-            f"Company not found: {company_id}"
-        )
+        raise ValueError(f"Company not found: {company_id}")
 
     company = company.iloc[0].to_dict()
 
@@ -303,10 +279,7 @@ def load_company(company_id):
 
         if not df.empty and "year" in df.columns:
 
-            df["year_num"] = (
-                df["year"]
-                .apply(normalize_year)
-            )
+            df["year_num"] = df["year"].apply(normalize_year)
 
     return {
         "company": company,
@@ -322,77 +295,48 @@ def load_company(company_id):
 # LATEST VALUE
 # ============================================================
 
+
 def latest_value(df, column):
 
-    if (
-        df.empty
-        or column is None
-        or column not in df.columns
-    ):
+    if df.empty or column is None or column not in df.columns:
         return None
 
     x = df.copy()
 
     if "year_num" in x.columns:
 
-        x = (
-            x.dropna(
-                subset=["year_num"]
-            )
-            .sort_values("year_num")
-        )
+        x = x.dropna(subset=["year_num"]).sort_values("year_num")
 
     if x.empty:
         return None
 
-    return safe_float(
-        x.iloc[-1][column]
-    )
+    return safe_float(x.iloc[-1][column])
 
 
 # ============================================================
 # PROS / CONS
 # ============================================================
 
+
 def load_pros_cons(company_id):
 
-    path = (
-        ROOT
-        / "output"
-        / "pros_cons_generated.csv"
-    )
+    path = ROOT / "output" / "pros_cons_generated.csv"
 
     if not path.exists():
         return [], []
 
     df = pd.read_csv(path)
 
-    df["company_id"] = (
-        df["company_id"]
-        .astype(str)
-    )
+    df["company_id"] = df["company_id"].astype(str)
 
-    rows = df[
-        df["company_id"]
-        == str(company_id)
-    ].copy()
+    rows = df[df["company_id"] == str(company_id)].copy()
 
     if rows.empty:
         return [], []
 
-    pros = rows[
-        rows["type"]
-        .astype(str)
-        .str.lower()
-        == "pro"
-    ]["text"].dropna().tolist()
+    pros = rows[rows["type"].astype(str).str.lower() == "pro"]["text"].dropna().tolist()
 
-    cons = rows[
-        rows["type"]
-        .astype(str)
-        .str.lower()
-        == "con"
-    ]["text"].dropna().tolist()
+    cons = rows[rows["type"].astype(str).str.lower() == "con"]["text"].dropna().tolist()
 
     return pros, cons
 
@@ -401,13 +345,10 @@ def load_pros_cons(company_id):
 # CAPITAL ALLOCATION
 # ============================================================
 
+
 def load_capital_allocation(company_id):
 
-    path = (
-        ROOT
-        / "output"
-        / "cashflow_intelligence.xlsx"
-    )
+    path = ROOT / "output" / "cashflow_intelligence.xlsx"
 
     if not path.exists():
         return "Insufficient Data"
@@ -417,11 +358,7 @@ def load_capital_allocation(company_id):
     if "company_id" not in df.columns:
         return "Insufficient Data"
 
-    rows = df[
-        df["company_id"]
-        .astype(str)
-        == str(company_id)
-    ]
+    rows = df[df["company_id"].astype(str) == str(company_id)]
 
     if rows.empty:
         return "Insufficient Data"
@@ -444,6 +381,7 @@ print("Part 2 loaded")
 # ROCE CALCULATION
 # ============================================================
 
+
 def calculate_roce_series(data):
 
     pnl = data["pnl"].copy()
@@ -458,16 +396,10 @@ def calculate_roce_series(data):
         )
 
     if "year_num" not in pnl.columns:
-        pnl["year_num"] = (
-            pnl["year"]
-            .apply(normalize_year)
-        )
+        pnl["year_num"] = pnl["year"].apply(normalize_year)
 
     if "year_num" not in balance.columns:
-        balance["year_num"] = (
-            balance["year"]
-            .apply(normalize_year)
-        )
+        balance["year_num"] = balance["year"].apply(normalize_year)
 
     required_pnl = [
         "year_num",
@@ -481,10 +413,7 @@ def calculate_roce_series(data):
         "borrowings",
     ]
 
-    if any(
-        col not in pnl.columns
-        for col in required_pnl
-    ):
+    if any(col not in pnl.columns for col in required_pnl):
         return pd.DataFrame(
             columns=[
                 "year_num",
@@ -492,10 +421,7 @@ def calculate_roce_series(data):
             ]
         )
 
-    if any(
-        col not in balance.columns
-        for col in required_balance
-    ):
+    if any(col not in balance.columns for col in required_balance):
         return pd.DataFrame(
             columns=[
                 "year_num",
@@ -503,12 +429,8 @@ def calculate_roce_series(data):
             ]
         )
 
-    merged = pnl[
-        required_pnl
-    ].merge(
-        balance[
-            required_balance
-        ],
+    merged = pnl[required_pnl].merge(
+        balance[required_balance],
         on="year_num",
         how="inner",
     )
@@ -541,17 +463,11 @@ def calculate_roce_series(data):
         errors="coerce",
     ).fillna(0)
 
-    capital_employed = (
-        equity_capital
-        + reserves
-        + borrowings
-    )
+    capital_employed = equity_capital + reserves + borrowings
 
     merged["roce"] = np.where(
         capital_employed != 0,
-        operating_profit
-        / capital_employed
-        * 100,
+        operating_profit / capital_employed * 100,
         np.nan,
     )
 
@@ -570,6 +486,7 @@ def calculate_roce_series(data):
 # ============================================================
 # KPI CALCULATIONS
 # ============================================================
+
 
 def calculate_kpis(data):
 
@@ -649,17 +566,9 @@ def calculate_kpis(data):
     # ROCE
     # --------------------------------------------------------
 
-    roce = calculate_roce_series(
-        data
-    )
+    roce = calculate_roce_series(data)
 
-    result["ROCE"] = (
-        safe_float(
-            roce.iloc[-1]["roce"]
-        )
-        if not roce.empty
-        else None
-    )
+    result["ROCE"] = safe_float(roce.iloc[-1]["roce"]) if not roce.empty else None
 
     # --------------------------------------------------------
     # DEBT / EQUITY
@@ -721,10 +630,7 @@ def calculate_kpis(data):
         else None
     )
 
-    if (
-        cfo is not None
-        and cfi is not None
-    ):
+    if cfo is not None and cfi is not None:
         result["FCF"] = cfo + cfi
     else:
         result["FCF"] = None
@@ -736,6 +642,7 @@ print("Part 3 loaded")
 # ============================================================
 # REVENUE + NET PROFIT BAR CHART
 # ============================================================
+
 
 def create_revenue_profit_png(data, company_id):
 
@@ -766,10 +673,7 @@ def create_revenue_profit_png(data, company_id):
         return Drawing(520, 155)
 
     if "year_num" not in pnl.columns:
-        pnl["year_num"] = (
-            pnl["year"]
-            .apply(normalize_year)
-        )
+        pnl["year_num"] = pnl["year"].apply(normalize_year)
 
     x = pnl[
         [
@@ -809,10 +713,7 @@ def create_revenue_profit_png(data, company_id):
     if x.empty:
         return Drawing(520, 155)
 
-    d = Drawing(
-        520,
-        155
-    )
+    d = Drawing(520, 155)
 
     chart = VerticalBarChart()
 
@@ -826,10 +727,7 @@ def create_revenue_profit_png(data, company_id):
         x[profit_col].tolist(),
     ]
 
-    chart.categoryAxis.categoryNames = [
-        str(int(year))
-        for year in x["year_num"]
-    ]
+    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
 
     chart.categoryAxis.labels.fontSize = 6
     chart.categoryAxis.labels.angle = 0
@@ -871,6 +769,7 @@ def create_revenue_profit_png(data, company_id):
 # ROE + ROCE LINE CHART
 # ============================================================
 
+
 def create_roe_roce_png(data, company_id):
 
     ratios = data["ratios"].copy()
@@ -891,10 +790,7 @@ def create_roe_roce_png(data, company_id):
         return Drawing(520, 155)
 
     if "year_num" not in ratios.columns:
-        ratios["year_num"] = (
-            ratios["year"]
-            .apply(normalize_year)
-        )
+        ratios["year_num"] = ratios["year"].apply(normalize_year)
 
     roe_data = ratios[
         [
@@ -913,9 +809,7 @@ def create_roe_roce_png(data, company_id):
         errors="coerce",
     )
 
-    roce_data = calculate_roce_series(
-        data
-    )
+    roce_data = calculate_roce_series(data)
 
     x = roe_data.merge(
         roce_data,
@@ -923,21 +817,12 @@ def create_roe_roce_png(data, company_id):
         how="left",
     )
 
-    x = (
-        x.dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-        .tail(10)
-    )
+    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
 
     if x.empty:
         return Drawing(520, 155)
 
-    d = Drawing(
-        520,
-        155
-    )
+    d = Drawing(520, 155)
 
     chart = HorizontalLineChart()
 
@@ -947,20 +832,11 @@ def create_roe_roce_png(data, company_id):
     chart.height = 105
 
     chart.data = [
-        [
-            safe_float(v) or 0
-            for v in x[roe_col]
-        ],
-        [
-            safe_float(v) or 0
-            for v in x["roce"]
-        ],
+        [safe_float(v) or 0 for v in x[roe_col]],
+        [safe_float(v) or 0 for v in x["roce"]],
     ]
 
-    chart.categoryAxis.categoryNames = [
-        str(int(year))
-        for year in x["year_num"]
-    ]
+    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
 
     chart.categoryAxis.labels.fontSize = 6
 
@@ -1002,6 +878,7 @@ print("Part 4 loaded")
 # BALANCE SHEET COMPOSITION CHART
 # ============================================================
 
+
 def create_balance_png(data, company_id):
 
     balance = data["balance"].copy()
@@ -1010,10 +887,7 @@ def create_balance_png(data, company_id):
         return Drawing(520, 155)
 
     if "year_num" not in balance.columns:
-        balance["year_num"] = (
-            balance["year"]
-            .apply(normalize_year)
-        )
+        balance["year_num"] = balance["year"].apply(normalize_year)
 
     required = [
         "year_num",
@@ -1023,15 +897,10 @@ def create_balance_png(data, company_id):
         "other_liabilities",
     ]
 
-    if any(
-        col not in balance.columns
-        for col in required
-    ):
+    if any(col not in balance.columns for col in required):
         return Drawing(520, 155)
 
-    x = balance[
-        required
-    ].copy()
+    x = balance[required].copy()
 
     x["year_num"] = pd.to_numeric(
         x["year_num"],
@@ -1049,27 +918,15 @@ def create_balance_png(data, company_id):
             errors="coerce",
         ).fillna(0)
 
-    x = (
-        x.dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-        .tail(10)
-    )
+    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
 
     if x.empty:
         return Drawing(520, 155)
 
     # Equity = equity capital + reserves
-    x["equity"] = (
-        x["equity_capital"]
-        + x["reserves"]
-    )
+    x["equity"] = x["equity_capital"] + x["reserves"]
 
-    d = Drawing(
-        520,
-        155
-    )
+    d = Drawing(520, 155)
 
     chart = VerticalBarChart()
 
@@ -1084,10 +941,7 @@ def create_balance_png(data, company_id):
         x["other_liabilities"].tolist(),
     ]
 
-    chart.categoryAxis.categoryNames = [
-        str(int(year))
-        for year in x["year_num"]
-    ]
+    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
 
     chart.categoryAxis.labels.fontSize = 6
     chart.valueAxis.labels.fontSize = 6
@@ -1138,23 +992,18 @@ def create_balance_png(data, company_id):
 # CASH FLOW WATERFALL
 # ============================================================
 
+
 def create_cashflow_png(data, company_id):
 
     cashflow = data["cashflow"].copy()
 
-    d = Drawing(
-        520,
-        170
-    )
+    d = Drawing(520, 170)
 
     if cashflow.empty:
         return d
 
     if "year_num" not in cashflow.columns:
-        cashflow["year_num"] = (
-            cashflow["year"]
-            .apply(normalize_year)
-        )
+        cashflow["year_num"] = cashflow["year"].apply(normalize_year)
 
     required = [
         "year_num",
@@ -1164,15 +1013,10 @@ def create_cashflow_png(data, company_id):
         "net_cash_flow",
     ]
 
-    if any(
-        col not in cashflow.columns
-        for col in required
-    ):
+    if any(col not in cashflow.columns for col in required):
         return d
 
-    x = cashflow[
-        required
-    ].copy()
+    x = cashflow[required].copy()
 
     x["year_num"] = pd.to_numeric(
         x["year_num"],
@@ -1185,12 +1029,7 @@ def create_cashflow_png(data, company_id):
             errors="coerce",
         )
 
-    x = (
-        x.dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-    )
+    x = x.dropna(subset=["year_num"]).sort_values("year_num")
 
     if x.empty:
         return d
@@ -1198,18 +1037,10 @@ def create_cashflow_png(data, company_id):
     row = x.iloc[-1]
 
     values = [
-        safe_float(
-            row["operating_activity"]
-        ),
-        safe_float(
-            row["investing_activity"]
-        ),
-        safe_float(
-            row["financing_activity"]
-        ),
-        safe_float(
-            row["net_cash_flow"]
-        ),
+        safe_float(row["operating_activity"]),
+        safe_float(row["investing_activity"]),
+        safe_float(row["financing_activity"]),
+        safe_float(row["net_cash_flow"]),
     ]
 
     labels = [
@@ -1220,17 +1051,9 @@ def create_cashflow_png(data, company_id):
     ]
 
     # Replace missing values with zero
-    values = [
-        0 if value is None else value
-        for value in values
-    ]
+    values = [0 if value is None else value for value in values]
 
-    max_abs = max(
-        [
-            abs(value)
-            for value in values
-        ] + [1]
-    )
+    max_abs = max([abs(value) for value in values] + [1])
 
     baseline = 65
     bar_width = 70
@@ -1248,25 +1071,13 @@ def create_cashflow_png(data, company_id):
         )
     )
 
-    for i, (label, value) in enumerate(
-        zip(labels, values)
-    ):
+    for i, (label, value) in enumerate(zip(labels, values)):
 
-        x_pos = (
-            25
-            + i * (
-                bar_width + gap
-            )
-        )
+        x_pos = 25 + i * (bar_width + gap)
 
-        height = (
-            abs(value)
-            / max_abs
-            * 75
-        )
+        height = abs(value) / max_abs * 75
 
-        if height < 2:
-            height = 2
+        height = max(height, 2)
 
         if value >= 0:
             y_pos = baseline
@@ -1324,6 +1135,7 @@ print("Part 5 loaded")
 # PAGE HEADER
 # ============================================================
 
+
 def header(company_name, ticker):
 
     data = [
@@ -1356,9 +1168,7 @@ def header(company_name, ticker):
             145 * mm,
             35 * mm,
         ],
-        rowHeights=[
-            18 * mm
-        ],
+        rowHeights=[18 * mm],
     )
 
     table.setStyle(
@@ -1399,6 +1209,7 @@ def header(company_name, ticker):
 # KPI TILES
 # ============================================================
 
+
 def kpi_tiles(kpis):
 
     labels = [
@@ -1435,9 +1246,7 @@ def kpi_tiles(kpis):
 
         else:
 
-            value_text = fmt(
-                value
-            )
+            value_text = fmt(value)
 
         cell = [
             Paragraph(
@@ -1527,6 +1336,7 @@ def kpi_tiles(kpis):
 # ============================================================
 # PROS + CONS
 # ============================================================
+
 
 def pros_cons_table(pros, cons):
 
@@ -1665,6 +1475,7 @@ def pros_cons_table(pros, cons):
 # CAPITAL ALLOCATION BADGE
 # ============================================================
 
+
 def allocation_badge(pattern):
 
     table = Table(
@@ -1684,9 +1495,7 @@ def allocation_badge(pattern):
                 )
             ]
         ],
-        colWidths=[
-            180 * mm
-        ],
+        colWidths=[180 * mm],
     )
 
     table.setStyle(
@@ -1728,6 +1537,7 @@ print("Part 6 loaded")
 # COMPLETE 2-PAGE TEARSHEET
 # ============================================================
 
+
 def build_tearsheet(company_id):
 
     data = load_company(company_id)
@@ -1751,20 +1561,13 @@ def build_tearsheet(company_id):
         )
     )
 
-    output_path = (
-        OUTPUT
-        / f"{ticker}_tearsheet.pdf"
-    )
+    output_path = OUTPUT / f"{ticker}_tearsheet.pdf"
 
     kpis = calculate_kpis(data)
 
-    pros, cons = load_pros_cons(
-        company_id
-    )
+    pros, cons = load_pros_cons(company_id)
 
-    allocation = load_capital_allocation(
-        company_id
-    )
+    allocation = load_capital_allocation(company_id)
 
     doc = SimpleDocTemplate(
         str(output_path),
@@ -1797,9 +1600,7 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        kpi_tiles(kpis)
-    )
+    story.append(kpi_tiles(kpis))
 
     story.append(
         Spacer(
@@ -1815,9 +1616,7 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        create_revenue_profit_png(data, company_id)
-    )
+    story.append(create_revenue_profit_png(data, company_id))
 
     story.append(
         Spacer(
@@ -1833,14 +1632,10 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        create_roe_roce_png(data, company_id)
-    )
+    story.append(create_roe_roce_png(data, company_id))
 
     # Force exactly one page break
-    story.append(
-        PageBreak()
-    )
+    story.append(PageBreak())
 
     # ========================================================
     # PAGE 2
@@ -1853,9 +1648,7 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        create_balance_png(data, company_id)
-    )
+    story.append(create_balance_png(data, company_id))
 
     story.append(
         Spacer(
@@ -1871,9 +1664,7 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        create_cashflow_png(data, company_id)
-    )
+    story.append(create_cashflow_png(data, company_id))
 
     story.append(
         Spacer(
@@ -1896,19 +1687,13 @@ def build_tearsheet(company_id):
         )
     )
 
-    story.append(
-        allocation_badge(
-            allocation
-        )
-    )
+    story.append(allocation_badge(allocation))
 
     # ========================================================
     # BUILD PDF
     # ========================================================
 
-    doc.build(
-        story
-    )
+    doc.build(story)
 
     return output_path
 
@@ -1916,6 +1701,7 @@ def build_tearsheet(company_id):
 # ============================================================
 # TEST FIVE COMPANIES
 # ============================================================
+
 
 def test_five_tearsheets():
 
@@ -1938,46 +1724,27 @@ def test_five_tearsheets():
     for ticker in tickers:
 
         print()
-        print(
-            f"Generating {ticker}..."
-        )
+        print(f"Generating {ticker}...")
 
         try:
 
-            path = build_tearsheet(
-                ticker
-            )
+            path = build_tearsheet(ticker)
 
-            size_kb = (
-                path.stat().st_size
-                / 1024
-            )
+            size_kb = path.stat().st_size / 1024
 
-            print(
-                f"Created: {path}"
-            )
+            print(f"Created: {path}")
 
-            print(
-                f"Size: {size_kb:.1f} KB"
-            )
+            print(f"Size: {size_kb:.1f} KB")
 
-            successful.append(
-                ticker
-            )
+            successful.append(ticker)
 
         except Exception as exc:
 
-            print(
-                f"FAILED: {ticker}"
-            )
+            print(f"FAILED: {ticker}")
 
-            print(
-                f"Error: {exc}"
-            )
+            print(f"Error: {exc}")
 
-            failed.append(
-                ticker
-            )
+            failed.append(ticker)
 
     print()
     print(
@@ -1995,17 +1762,11 @@ def test_five_tearsheets():
 
     for ticker in successful:
 
-        path = (
-            OUTPUT
-            / f"{ticker}_tearsheet.pdf"
-        )
+        path = OUTPUT / f"{ticker}_tearsheet.pdf"
 
         if path.exists():
 
-            print(
-                f"{path.name:<30}"
-                f"{path.stat().st_size / 1024:.1f} KB"
-            )
+            print(f"{path.name:<30}" f"{path.stat().st_size / 1024:.1f} KB")
 
 
 # ============================================================
@@ -2015,9 +1776,8 @@ def test_five_tearsheets():
 if __name__ == "__main__":
 
     test_five_tearsheets()
-from reportlab.platypus import Image
-from reportlab.lib.utils import ImageReader
 import matplotlib.pyplot as plt
+from reportlab.platypus import Image
 
 CHART_OUTPUT = ROOT / "output" / "tearsheet_charts"
 CHART_OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -2037,103 +1797,52 @@ def create_revenue_profit_png(data, company_id):
     if "year_num" not in pnl.columns:
         pnl["year_num"] = pnl["year"].apply(normalize_year)
 
-    revenue_col = first_existing(
-        pnl.columns,
-        ["sales", "revenue", "total_revenue"]
-    )
+    revenue_col = first_existing(pnl.columns, ["sales", "revenue", "total_revenue"])
 
     profit_col = first_existing(
-        pnl.columns,
-        ["net_profit", "net_profit_after_tax", "pat"]
+        pnl.columns, ["net_profit", "net_profit_after_tax", "pat"]
     )
 
     if not revenue_col or not profit_col:
         return None
 
-    x = pnl[
-        ["year_num", revenue_col, profit_col]
-    ].copy()
+    x = pnl[["year_num", revenue_col, profit_col]].copy()
 
-    x[revenue_col] = pd.to_numeric(
-        x[revenue_col], errors="coerce"
-    )
+    x[revenue_col] = pd.to_numeric(x[revenue_col], errors="coerce")
 
-    x[profit_col] = pd.to_numeric(
-        x[profit_col], errors="coerce"
-    )
+    x[profit_col] = pd.to_numeric(x[profit_col], errors="coerce")
 
-    x = (
-        x.dropna()
-        .sort_values("year_num")
-        .tail(10)
-    )
+    x = x.dropna().sort_values("year_num").tail(10)
 
     if x.empty:
         return None
 
-    path = _chart_path(
-        company_id,
-        "revenue_profit"
-    )
+    path = _chart_path(company_id, "revenue_profit")
 
-    fig, ax = plt.subplots(
-        figsize=(8.5, 2.6),
-        dpi=180
-    )
+    fig, ax = plt.subplots(figsize=(8.5, 2.6), dpi=180)
 
     positions = np.arange(len(x))
     width = 0.36
 
-    ax.bar(
-        positions - width / 2,
-        x[revenue_col],
-        width,
-        label="Revenue"
-    )
+    ax.bar(positions - width / 2, x[revenue_col], width, label="Revenue")
 
-    ax.bar(
-        positions + width / 2,
-        x[profit_col],
-        width,
-        label="Net Profit"
-    )
+    ax.bar(positions + width / 2, x[profit_col], width, label="Net Profit")
 
-    ax.set_xticks(
-        positions
-    )
+    ax.set_xticks(positions)
 
-    ax.set_xticklabels(
-        [str(int(y)) for y in x["year_num"]],
-        fontsize=7
-    )
+    ax.set_xticklabels([str(int(y)) for y in x["year_num"]], fontsize=7)
 
-    ax.tick_params(
-        axis="y",
-        labelsize=7
-    )
+    ax.tick_params(axis="y", labelsize=7)
 
-    ax.set_title(
-        "10-Year Revenue & Net Profit",
-        fontsize=9
-    )
+    ax.set_title("10-Year Revenue & Net Profit", fontsize=9)
 
-    ax.legend(
-        fontsize=7,
-        loc="upper left"
-    )
+    ax.legend(fontsize=7, loc="upper left")
 
-    ax.grid(
-        axis="y",
-        alpha=0.2
-    )
+    ax.grid(axis="y", alpha=0.2)
 
     fig.tight_layout()
 
-    fig.savefig(
-        path,
-        dpi=180,
-        bbox_inches="tight"
-    )
+    fig.savefig(path, dpi=180, bbox_inches="tight")
 
     plt.close(fig)
 
@@ -2152,110 +1861,49 @@ def create_roe_roce_png(data, company_id):
         return None
 
     if "year_num" not in ratios.columns:
-        ratios["year_num"] = (
-            ratios["year"].apply(normalize_year)
-        )
+        ratios["year_num"] = ratios["year"].apply(normalize_year)
 
-    roe_col = first_existing(
-        ratios.columns,
-        [
-            "return_on_equity_pct",
-            "roe",
-            "ROE"
-        ]
-    )
+    roe_col = first_existing(ratios.columns, ["return_on_equity_pct", "roe", "ROE"])
 
     if not roe_col:
         return None
 
-    roe = ratios[
-        ["year_num", roe_col]
-    ].copy()
+    roe = ratios[["year_num", roe_col]].copy()
 
-    roe[roe_col] = pd.to_numeric(
-        roe[roe_col],
-        errors="coerce"
-    )
+    roe[roe_col] = pd.to_numeric(roe[roe_col], errors="coerce")
 
     roce = calculate_roce_series(data)
 
-    x = roe.merge(
-        roce,
-        on="year_num",
-        how="left"
-    )
+    x = roe.merge(roce, on="year_num", how="left")
 
-    x = (
-        x.dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-        .tail(10)
-    )
+    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
 
     if x.empty:
         return None
 
-    path = _chart_path(
-        company_id,
-        "roe_roce"
-    )
+    path = _chart_path(company_id, "roe_roce")
 
-    fig, ax = plt.subplots(
-        figsize=(8.5, 2.6),
-        dpi=180
-    )
+    fig, ax = plt.subplots(figsize=(8.5, 2.6), dpi=180)
 
-    ax.plot(
-        x["year_num"],
-        x[roe_col],
-        marker="o",
-        linewidth=1.5,
-        label="ROE"
-    )
+    ax.plot(x["year_num"], x[roe_col], marker="o", linewidth=1.5, label="ROE")
 
-    ax.plot(
-        x["year_num"],
-        x["roce"],
-        marker="o",
-        linewidth=1.5,
-        label="ROCE"
-    )
+    ax.plot(x["year_num"], x["roce"], marker="o", linewidth=1.5, label="ROCE")
 
-    ax.set_title(
-        "ROE & ROCE Trend",
-        fontsize=9
-    )
+    ax.set_title("ROE & ROCE Trend", fontsize=9)
 
-    ax.set_xticks(
-        x["year_num"]
-    )
+    ax.set_xticks(x["year_num"])
 
-    ax.set_xticklabels(
-        [str(int(y)) for y in x["year_num"]],
-        fontsize=7
-    )
+    ax.set_xticklabels([str(int(y)) for y in x["year_num"]], fontsize=7)
 
-    ax.tick_params(
-        axis="y",
-        labelsize=7
-    )
+    ax.tick_params(axis="y", labelsize=7)
 
-    ax.legend(
-        fontsize=7
-    )
+    ax.legend(fontsize=7)
 
-    ax.grid(
-        alpha=0.2
-    )
+    ax.grid(alpha=0.2)
 
     fig.tight_layout()
 
-    fig.savefig(
-        path,
-        dpi=180,
-        bbox_inches="tight"
-    )
+    fig.savefig(path, dpi=180, bbox_inches="tight")
 
     plt.close(fig)
 
@@ -2274,120 +1922,58 @@ def create_balance_png(data, company_id):
         return None
 
     if "year_num" not in balance.columns:
-        balance["year_num"] = (
-            balance["year"].apply(normalize_year)
-        )
+        balance["year_num"] = balance["year"].apply(normalize_year)
 
     required = [
         "year_num",
         "equity_capital",
         "reserves",
         "borrowings",
-        "other_liabilities"
+        "other_liabilities",
     ]
 
-    if any(
-        c not in balance.columns
-        for c in required
-    ):
+    if any(c not in balance.columns for c in required):
         return None
 
     x = balance[required].copy()
 
     for c in required[1:]:
-        x[c] = pd.to_numeric(
-            x[c],
-            errors="coerce"
-        ).fillna(0)
+        x[c] = pd.to_numeric(x[c], errors="coerce").fillna(0)
 
-    x = (
-        x.dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-        .tail(10)
-    )
+    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
 
     if x.empty:
         return None
 
-    x["equity"] = (
-        x["equity_capital"]
-        + x["reserves"]
-    )
+    x["equity"] = x["equity_capital"] + x["reserves"]
 
-    path = _chart_path(
-        company_id,
-        "balance"
-    )
+    path = _chart_path(company_id, "balance")
 
-    fig, ax = plt.subplots(
-        figsize=(8.5, 2.6),
-        dpi=180
-    )
+    fig, ax = plt.subplots(figsize=(8.5, 2.6), dpi=180)
 
-    years = [
-        str(int(y))
-        for y in x["year_num"]
-    ]
+    years = [str(int(y)) for y in x["year_num"]]
 
-    ax.bar(
-        years,
-        x["equity"],
-        label="Equity"
-    )
+    ax.bar(years, x["equity"], label="Equity")
 
-    ax.bar(
-        years,
-        x["borrowings"],
-        bottom=x["equity"],
-        label="Borrowings"
-    )
+    ax.bar(years, x["borrowings"], bottom=x["equity"], label="Borrowings")
 
-    bottom = (
-        x["equity"]
-        + x["borrowings"]
-    )
+    bottom = x["equity"] + x["borrowings"]
 
-    ax.bar(
-        years,
-        x["other_liabilities"],
-        bottom=bottom,
-        label="Other Liabilities"
-    )
+    ax.bar(years, x["other_liabilities"], bottom=bottom, label="Other Liabilities")
 
-    ax.set_title(
-        "Balance Sheet Composition",
-        fontsize=9
-    )
+    ax.set_title("Balance Sheet Composition", fontsize=9)
 
-    ax.tick_params(
-        axis="x",
-        labelsize=7
-    )
+    ax.tick_params(axis="x", labelsize=7)
 
-    ax.tick_params(
-        axis="y",
-        labelsize=7
-    )
+    ax.tick_params(axis="y", labelsize=7)
 
-    ax.legend(
-        fontsize=7,
-        loc="upper left"
-    )
+    ax.legend(fontsize=7, loc="upper left")
 
-    ax.grid(
-        axis="y",
-        alpha=0.2
-    )
+    ax.grid(axis="y", alpha=0.2)
 
     fig.tight_layout()
 
-    fig.savefig(
-        path,
-        dpi=180,
-        bbox_inches="tight"
-    )
+    fig.savefig(path, dpi=180, bbox_inches="tight")
 
     plt.close(fig)
 
@@ -2406,106 +1992,58 @@ def create_cashflow_png(data, company_id):
         return None
 
     if "year_num" not in cashflow.columns:
-        cashflow["year_num"] = (
-            cashflow["year"].apply(normalize_year)
-        )
+        cashflow["year_num"] = cashflow["year"].apply(normalize_year)
 
     required = [
         "year_num",
         "operating_activity",
         "investing_activity",
         "financing_activity",
-        "net_cash_flow"
+        "net_cash_flow",
     ]
 
-    if any(
-        c not in cashflow.columns
-        for c in required
-    ):
+    if any(c not in cashflow.columns for c in required):
         return None
 
-    x = (
-        cashflow[required]
-        .dropna(
-            subset=["year_num"]
-        )
-        .sort_values("year_num")
-    )
+    x = cashflow[required].dropna(subset=["year_num"]).sort_values("year_num")
 
     if x.empty:
         return None
 
     row = x.iloc[-1]
 
-    labels = [
-        "CFO",
-        "CFI",
-        "CFF",
-        "Net Cash Flow"
-    ]
+    labels = ["CFO", "CFI", "CFF", "Net Cash Flow"]
 
     values = [
         float(row["operating_activity"]),
         float(row["investing_activity"]),
         float(row["financing_activity"]),
-        float(row["net_cash_flow"])
+        float(row["net_cash_flow"]),
     ]
 
-    path = _chart_path(
-        company_id,
-        "cashflow"
-    )
+    path = _chart_path(company_id, "cashflow")
 
-    fig, ax = plt.subplots(
-        figsize=(8.5, 2.6),
-        dpi=180
-    )
+    fig, ax = plt.subplots(figsize=(8.5, 2.6), dpi=180)
 
-    positions = np.arange(
-        len(labels)
-    )
+    positions = np.arange(len(labels))
 
-    ax.bar(
-        positions,
-        values
-    )
+    ax.bar(positions, values)
 
-    ax.axhline(
-        0,
-        linewidth=0.8
-    )
+    ax.axhline(0, linewidth=0.8)
 
-    ax.set_xticks(
-        positions
-    )
+    ax.set_xticks(positions)
 
-    ax.set_xticklabels(
-        labels,
-        fontsize=8
-    )
+    ax.set_xticklabels(labels, fontsize=8)
 
-    ax.set_title(
-        f"Latest-Year Cash Flow ({int(row['year_num'])})",
-        fontsize=9
-    )
+    ax.set_title(f"Latest-Year Cash Flow ({int(row['year_num'])})", fontsize=9)
 
-    ax.tick_params(
-        axis="y",
-        labelsize=7
-    )
+    ax.tick_params(axis="y", labelsize=7)
 
-    ax.grid(
-        axis="y",
-        alpha=0.2
-    )
+    ax.grid(axis="y", alpha=0.2)
 
     fig.tight_layout()
 
-    fig.savefig(
-        path,
-        dpi=180,
-        bbox_inches="tight"
-    )
+    fig.savefig(path, dpi=180, bbox_inches="tight")
 
     plt.close(fig)
 

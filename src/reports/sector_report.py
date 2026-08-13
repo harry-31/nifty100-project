@@ -1,21 +1,19 @@
-﻿from pathlib import Path
-import sqlite3
+﻿import sqlite3
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
 
 # ============================================================
@@ -80,6 +78,7 @@ SMALL = ParagraphStyle(
 # ============================================================
 # DATABASE LOAD
 # ============================================================
+
 
 def load_data():
 
@@ -156,6 +155,7 @@ def load_data():
 # YEAR NORMALIZATION
 # ============================================================
 
+
 def normalize_year(value):
 
     if pd.isna(value):
@@ -180,6 +180,7 @@ def normalize_year(value):
 # LATEST VALUE
 # ============================================================
 
+
 def latest_value(df, column):
 
     if df.empty or column not in df.columns:
@@ -187,13 +188,9 @@ def latest_value(df, column):
 
     temp = df.copy()
 
-    temp["year_num"] = temp["year"].apply(
-        normalize_year
-    )
+    temp["year_num"] = temp["year"].apply(normalize_year)
 
-    temp = temp.dropna(
-        subset=["year_num"]
-    ).sort_values("year_num")
+    temp = temp.dropna(subset=["year_num"]).sort_values("year_num")
 
     if temp.empty:
         return np.nan
@@ -207,6 +204,7 @@ def latest_value(df, column):
 # ============================================================
 # COMPANY KPI TABLE
 # ============================================================
+
 
 def build_company_kpis(
     companies,
@@ -222,9 +220,7 @@ def build_company_kpis(
             "broad_sector",
             "sub_sector",
         ]
-    ].drop_duplicates(
-        "company_id"
-    )
+    ].drop_duplicates("company_id")
 
     base = companies.merge(
         sector_map,
@@ -236,36 +232,19 @@ def build_company_kpis(
 
     for company_id in base["company_id"]:
 
-        company_row = base[
-            base["company_id"] == company_id
-        ].iloc[0]
+        company_row = base[base["company_id"] == company_id].iloc[0]
 
-        rr = ratios[
-            ratios["company_id"].astype(str)
-            == str(company_id)
-        ].copy()
+        rr = ratios[ratios["company_id"].astype(str) == str(company_id)].copy()
 
-        pl = pnl[
-            pnl["company_id"].astype(str)
-            == str(company_id)
-        ].copy()
+        pl = pnl[pnl["company_id"].astype(str) == str(company_id)].copy()
 
-        cf = cashflow[
-            cashflow["company_id"].astype(str)
-            == str(company_id)
-        ].copy()
+        cf = cashflow[cashflow["company_id"].astype(str) == str(company_id)].copy()
 
         record = {
             "company_id": company_id,
-            "company_name": company_row[
-                "company_name"
-            ],
-            "broad_sector": company_row[
-                "broad_sector"
-            ],
-            "sub_sector": company_row[
-                "sub_sector"
-            ],
+            "company_name": company_row["company_name"],
+            "broad_sector": company_row["broad_sector"],
+            "sub_sector": company_row["sub_sector"],
             "Revenue": latest_value(
                 pl,
                 "sales",
@@ -291,41 +270,26 @@ def build_company_kpis(
 
         if not cf.empty:
 
-            cf["year_num"] = cf[
-                "year"
-            ].apply(normalize_year)
+            cf["year_num"] = cf["year"].apply(normalize_year)
 
-            cf = cf.dropna(
-                subset=["year_num"]
-            ).sort_values(
-                "year_num"
-            )
+            cf = cf.dropna(subset=["year_num"]).sort_values("year_num")
 
             if not cf.empty:
 
                 latest = cf.iloc[-1]
 
                 cfo = pd.to_numeric(
-                    latest[
-                        "operating_activity"
-                    ],
+                    latest["operating_activity"],
                     errors="coerce",
                 )
 
                 cfi = pd.to_numeric(
-                    latest[
-                        "investing_activity"
-                    ],
+                    latest["investing_activity"],
                     errors="coerce",
                 )
 
-                if (
-                    pd.notna(cfo)
-                    and pd.notna(cfi)
-                ):
-                    record["FCF"] = (
-                        cfo + cfi
-                    )
+                if pd.notna(cfo) and pd.notna(cfi):
+                    record["FCF"] = cfo + cfi
 
         records.append(record)
 
@@ -336,15 +300,13 @@ def build_company_kpis(
 # SECTOR SUMMARY
 # ============================================================
 
+
 def sector_summary(
     company_kpis,
     sector,
 ):
 
-    data = company_kpis[
-        company_kpis["broad_sector"]
-        == sector
-    ].copy()
+    data = company_kpis[company_kpis["broad_sector"] == sector].copy()
 
     numeric = [
         "Revenue",
@@ -367,11 +329,7 @@ def sector_summary(
         rows.append(
             [
                 col,
-                (
-                    f"{value:,.2f}"
-                    if pd.notna(value)
-                    else "N/A"
-                ),
+                (f"{value:,.2f}" if pd.notna(value) else "N/A"),
             ]
         )
 
@@ -381,6 +339,7 @@ def sector_summary(
 # ============================================================
 # TABLE HELPER
 # ============================================================
+
 
 def make_table(
     data,
@@ -459,9 +418,7 @@ def make_table(
             ]
         )
 
-    table.setStyle(
-        TableStyle(commands)
-    )
+    table.setStyle(TableStyle(commands))
 
     return table
 
@@ -470,24 +427,17 @@ def make_table(
 # BUILD SECTOR REPORT
 # ============================================================
 
+
 def build_sector_report(
     sector,
     company_kpis,
 ):
 
-    output = (
-        OUTPUT
-        / f"{sector.replace('/', '_')}_report.pdf"
-    )
+    output = OUTPUT / f"{sector.replace('/', '_')}_report.pdf"
 
-    data = company_kpis[
-        company_kpis["broad_sector"]
-        == sector
-    ].copy()
+    data = company_kpis[company_kpis["broad_sector"] == sector].copy()
 
-    data = data.sort_values(
-        "company_id"
-    )
+    data = data.sort_values("company_id")
 
     doc = SimpleDocTemplate(
         str(output),
@@ -514,12 +464,8 @@ def build_sector_report(
                 )
             ]
         ],
-        colWidths=[
-            186 * mm
-        ],
-        rowHeights=[
-            28 * mm
-        ],
+        colWidths=[186 * mm],
+        rowHeights=[28 * mm],
     )
 
     header_table.setStyle(
@@ -543,9 +489,7 @@ def build_sector_report(
 
     story.append(header_table)
 
-    story.append(
-        Spacer(1, 6 * mm)
-    )
+    story.append(Spacer(1, 6 * mm))
 
     # --------------------------------------------------------
     # SECTOR SUMMARY
@@ -599,9 +543,7 @@ def build_sector_report(
         )
     )
 
-    story.append(
-        Spacer(1, 6 * mm)
-    )
+    story.append(Spacer(1, 6 * mm))
 
     story.append(
         Paragraph(
@@ -610,9 +552,7 @@ def build_sector_report(
         )
     )
 
-    story.append(
-        Spacer(1, 4 * mm)
-    )
+    story.append(Spacer(1, 4 * mm))
 
     # --------------------------------------------------------
     # COMPANY TABLE
@@ -709,6 +649,7 @@ def build_sector_report(
 # MAIN
 # ============================================================
 
+
 def main():
 
     print("=" * 70)
@@ -736,13 +677,7 @@ def main():
         cashflow,
     )
 
-    sector_list = sorted(
-        company_kpis[
-            "broad_sector"
-        ]
-        .dropna()
-        .unique()
-    )
+    sector_list = sorted(company_kpis["broad_sector"].dropna().unique())
 
     print(
         "Distinct sectors:",
@@ -763,10 +698,7 @@ def main():
     ):
 
         print()
-        print(
-            f"[{index}/{len(sector_list)}] "
-            f"{sector}"
-        )
+        print(f"[{index}/{len(sector_list)}] " f"{sector}")
 
         try:
 
@@ -775,22 +707,13 @@ def main():
                 company_kpis,
             )
 
-            size_kb = (
-                path.stat().st_size
-                / 1024
-            )
+            size_kb = path.stat().st_size / 1024
 
-            print(
-                f"Generated: {path.name}"
-            )
+            print(f"Generated: {path.name}")
 
-            print(
-                f"Size: {size_kb:.1f} KB"
-            )
+            print(f"Size: {size_kb:.1f} KB")
 
-            generated.append(
-                sector
-            )
+            generated.append(sector)
 
         except Exception as exc:
 
@@ -804,9 +727,7 @@ def main():
                 exc,
             )
 
-            failed.append(
-                sector
-            )
+            failed.append(sector)
 
     print()
     print("=" * 70)
@@ -841,31 +762,25 @@ def main():
         )
 
     if (
-        len(generated)
-        == len(sector_list)
-        and len(sector_list)
-        == 11
+        len(generated) == len(sector_list)
+        and len(sector_list) == 11
         and len(failed) == 0
     ):
 
-        print(
-            "STATUS: SECTOR REPORTS COMPLETE"
-        )
+        print("STATUS: SECTOR REPORTS COMPLETE")
 
     else:
 
-        print(
-            "STATUS: SECTOR REPORTS NEED REVIEW"
-        )
+        print("STATUS: SECTOR REPORTS NEED REVIEW")
 
 
 if __name__ == "__main__":
     main()
+
+
 def build_portfolio_sector_summary(company_kpis):
 
-    output = (
-        OUTPUT / "Portfolio_Sector_Summary_report.pdf"
-    )
+    output = OUTPUT / "Portfolio_Sector_Summary_report.pdf"
 
     doc = SimpleDocTemplate(
         str(output),
@@ -948,9 +863,7 @@ def build_portfolio_sector_summary(company_kpis):
             [
                 Paragraph(metric, BODY),
                 Paragraph(
-                    f"{value:,.2f}"
-                    if pd.notna(value)
-                    else "N/A",
+                    f"{value:,.2f}" if pd.notna(value) else "N/A",
                     BODY,
                 ),
             ]
@@ -982,16 +895,9 @@ def build_portfolio_sector_summary(company_kpis):
         ]
     ]
 
-    for sector in sorted(
-        company_kpis["broad_sector"]
-        .dropna()
-        .unique()
-    ):
+    for sector in sorted(company_kpis["broad_sector"].dropna().unique()):
 
-        data = company_kpis[
-            company_kpis["broad_sector"]
-            == sector
-        ]
+        data = company_kpis[company_kpis["broad_sector"] == sector]
 
         roe = pd.to_numeric(
             data["ROE"],
@@ -1016,21 +922,15 @@ def build_portfolio_sector_summary(company_kpis):
                     SMALL,
                 ),
                 Paragraph(
-                    f"{roe:.2f}"
-                    if pd.notna(roe)
-                    else "N/A",
+                    f"{roe:.2f}" if pd.notna(roe) else "N/A",
                     SMALL,
                 ),
                 Paragraph(
-                    f"{de:.2f}"
-                    if pd.notna(de)
-                    else "N/A",
+                    f"{de:.2f}" if pd.notna(de) else "N/A",
                     SMALL,
                 ),
                 Paragraph(
-                    f"{opm:.2f}"
-                    if pd.notna(opm)
-                    else "N/A",
+                    f"{opm:.2f}" if pd.notna(opm) else "N/A",
                     SMALL,
                 ),
             ]

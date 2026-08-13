@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 CLUSTER_FILE = "output/cluster_labels.csv"
 DB_PATH = Path("nifty100.db")
 
@@ -40,17 +39,11 @@ def load_cluster_data():
 def create_cluster_profile(df):
     """Calculate mean and median of five clustering features per cluster."""
     mean_profile = (
-        df.groupby("cluster_id")[FEATURES]
-        .mean()
-        .round(2)
-        .add_suffix("_mean")
+        df.groupby("cluster_id")[FEATURES].mean().round(2).add_suffix("_mean")
     )
 
     median_profile = (
-        df.groupby("cluster_id")[FEATURES]
-        .median()
-        .round(2)
-        .add_suffix("_median")
+        df.groupby("cluster_id")[FEATURES].median().round(2).add_suffix("_median")
     )
 
     profile = mean_profile.join(median_profile)
@@ -64,9 +57,7 @@ def save_cluster_profile(profile):
     """Save cluster profiling statistics."""
     Path("output").mkdir(exist_ok=True)
 
-    profile.to_csv(
-        "output/cluster_profile.csv"
-    )
+    profile.to_csv("output/cluster_profile.csv")
 
     print("Saved: output/cluster_profile.csv")
 
@@ -111,9 +102,7 @@ def create_sector_outlier_report():
 
     # Keep latest available non-TTM record for each company.
     df = (
-        df.sort_values(
-            ["company_id", "date_order"]
-        )
+        df.sort_values(["company_id", "date_order"])
         .groupby("company_id")
         .tail(1)
         .copy()

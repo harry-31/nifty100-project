@@ -1,7 +1,6 @@
-import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-
+import streamlit as st
 from utils.db import get_companies, get_ratios
 
 st.set_page_config(page_title="Trend Analysis", layout="wide")
@@ -56,6 +55,7 @@ COLORS = ["#2563EB", "#DC2626", "#059669"]  # up to 3 metric lines
 # Company search
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
 def load_company_options() -> pd.DataFrame:
     companies = get_companies()
@@ -100,11 +100,13 @@ if not selected_labels:
 # Load 10-year history for this company
 # ---------------------------------------------------------------------------
 
+
 @st.cache_data(ttl=600, show_spinner=False)
 def load_history(company_id: str) -> pd.DataFrame:
     hist = get_ratios(company_id=company_id)
     hist = hist[hist["year"] != "TTM"]
     return hist.sort_values("year").tail(10)
+
 
 history = load_history(company_id)
 
@@ -140,30 +142,45 @@ for i, label in enumerate(selected_labels):
 
     on_secondary = meta["axis"] != primary_axis_group
 
-    fig.add_trace(go.Scatter(
-        x=series["year"],
-        y=series[column],
-        mode="lines+markers+text",
-        name=label,
-        text=yoy_text,
-        textposition="top center",
-        textfont=dict(size=10, color=COLORS[i % len(COLORS)]),
-        line=dict(color=COLORS[i % len(COLORS)], width=2),
-        marker=dict(size=7),
-        yaxis="y2" if on_secondary else "y1",
-    ))
+    fig.add_trace(
+        go.Scatter(
+            x=series["year"],
+            y=series[column],
+            mode="lines+markers+text",
+            name=label,
+            text=yoy_text,
+            textposition="top center",
+            textfont={"size": 10, "color": COLORS[i % len(COLORS)]},
+            line={"color": COLORS[i % len(COLORS)], "width": 2},
+            marker={"size": 7},
+            yaxis="y2" if on_secondary else "y1",
+        )
+    )
 
 fig.update_layout(
-    xaxis=dict(title="Year"),
-    yaxis=dict(title=selected_labels[0]),
-    yaxis2=dict(title="Secondary scale", overlaying="y", side="right", showgrid=False),
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+    xaxis={"title": "Year"},
+    yaxis={"title": selected_labels[0]},
+    yaxis2={
+        "title": "Secondary scale",
+        "overlaying": "y",
+        "side": "right",
+        "showgrid": False,
+    },
+    legend={
+        "orientation": "h",
+        "yanchor": "bottom",
+        "y": 1.02,
+        "xanchor": "right",
+        "x": 1,
+    },
     hovermode="x unified",
-    margin=dict(t=60, b=40),
+    margin={"t": 60, "b": 40},
 )
 
 st.plotly_chart(fig, use_container_width=True)
-st.caption("Labels above each point show year-over-year % change. Metrics on a different scale from the first selection are plotted on the right-hand axis.")
+st.caption(
+    "Labels above each point show year-over-year % change. Metrics on a different scale from the first selection are plotted on the right-hand axis."
+)
 
 st.divider()
 
@@ -174,9 +191,15 @@ st.divider()
 
 st.subheader("📋 Underlying Data")
 
-table_cols = ["year"] + [METRICS[l]["column"] for l in selected_labels if METRICS[l]["column"] in history.columns]
+table_cols = ["year"] + [
+    METRICS[l]["column"]
+    for l in selected_labels
+    if METRICS[l]["column"] in history.columns
+]
 table = history[table_cols].copy()
-table.columns = ["Year"] + [l for l in selected_labels if METRICS[l]["column"] in history.columns]
+table.columns = ["Year"] + [
+    l for l in selected_labels if METRICS[l]["column"] in history.columns
+]
 
 for col in table.select_dtypes(include="number").columns:
     table[col] = table[col].round(2)

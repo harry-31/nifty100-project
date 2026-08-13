@@ -1,23 +1,21 @@
-﻿from pathlib import Path
-import sqlite3
+﻿import sqlite3
+from pathlib import Path
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
-    SimpleDocTemplate,
+    PageBreak,
     Paragraph,
+    SimpleDocTemplate,
     Spacer,
     Table,
     TableStyle,
-    PageBreak,
 )
-
 
 # ============================================================
 # PATHS
@@ -109,6 +107,7 @@ KPI_LABEL = ParagraphStyle(
 # HELPERS
 # ============================================================
 
+
 def normalize_year(value):
     if pd.isna(value):
         return np.nan
@@ -191,6 +190,7 @@ def arrow_color(arrow):
 # DATA LOADING
 # ============================================================
 
+
 def load_data():
     conn = sqlite3.connect(DB_PATH)
 
@@ -238,6 +238,7 @@ def load_data():
 # COMPANY KPI CALCULATION
 # ============================================================
 
+
 def company_kpis(
     company_id,
     companies,
@@ -247,30 +248,15 @@ def company_kpis(
     cashflow,
 ):
 
-    company_rows = companies[
-        companies["id"].astype(str)
-        == str(company_id)
-    ]
+    company_rows = companies[companies["id"].astype(str) == str(company_id)]
 
-    sector_rows = sectors[
-        sectors["company_id"].astype(str)
-        == str(company_id)
-    ]
+    sector_rows = sectors[sectors["company_id"].astype(str) == str(company_id)]
 
-    pnl_c = pnl[
-        pnl["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    pnl_c = pnl[pnl["company_id"].astype(str) == str(company_id)].copy()
 
-    ratio_c = ratios[
-        ratios["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    ratio_c = ratios[ratios["company_id"].astype(str) == str(company_id)].copy()
 
-    cf_c = cashflow[
-        cashflow["company_id"].astype(str)
-        == str(company_id)
-    ].copy()
+    cf_c = cashflow[cashflow["company_id"].astype(str) == str(company_id)].copy()
 
     pnl_c = pnl_c.sort_values("year_num")
     ratio_c = ratio_c.sort_values("year_num")
@@ -306,33 +292,17 @@ def company_kpis(
     # Latest P&L
     # --------------------------------------------------------
 
-    latest_pnl = (
-        pnl_c.iloc[-1]
-        if not pnl_c.empty
-        else None
-    )
+    latest_pnl = pnl_c.iloc[-1] if not pnl_c.empty else None
 
-    previous_pnl = (
-        pnl_c.iloc[-2]
-        if len(pnl_c) >= 2
-        else None
-    )
+    previous_pnl = pnl_c.iloc[-2] if len(pnl_c) >= 2 else None
 
     # --------------------------------------------------------
     # Latest ratios
     # --------------------------------------------------------
 
-    latest_ratio = (
-        ratio_c.iloc[-1]
-        if not ratio_c.empty
-        else None
-    )
+    latest_ratio = ratio_c.iloc[-1] if not ratio_c.empty else None
 
-    previous_ratio = (
-        ratio_c.iloc[-2]
-        if len(ratio_c) >= 2
-        else None
-    )
+    previous_ratio = ratio_c.iloc[-2] if len(ratio_c) >= 2 else None
 
     # --------------------------------------------------------
     # Revenue
@@ -340,15 +310,13 @@ def company_kpis(
 
     revenue = (
         safe_float(latest_pnl["sales"])
-        if latest_pnl is not None
-        and "sales" in latest_pnl
+        if latest_pnl is not None and "sales" in latest_pnl
         else np.nan
     )
 
     previous_revenue = (
         safe_float(previous_pnl["sales"])
-        if previous_pnl is not None
-        and "sales" in previous_pnl
+        if previous_pnl is not None and "sales" in previous_pnl
         else np.nan
     )
 
@@ -358,15 +326,13 @@ def company_kpis(
 
     net_profit = (
         safe_float(latest_pnl["net_profit"])
-        if latest_pnl is not None
-        and "net_profit" in latest_pnl
+        if latest_pnl is not None and "net_profit" in latest_pnl
         else np.nan
     )
 
     previous_profit = (
         safe_float(previous_pnl["net_profit"])
-        if previous_pnl is not None
-        and "net_profit" in previous_pnl
+        if previous_pnl is not None and "net_profit" in previous_pnl
         else np.nan
     )
 
@@ -375,20 +341,14 @@ def company_kpis(
     # --------------------------------------------------------
 
     roe = (
-        safe_float(
-            latest_ratio["return_on_equity_pct"]
-        )
-        if latest_ratio is not None
-        and "return_on_equity_pct" in latest_ratio
+        safe_float(latest_ratio["return_on_equity_pct"])
+        if latest_ratio is not None and "return_on_equity_pct" in latest_ratio
         else np.nan
     )
 
     previous_roe = (
-        safe_float(
-            previous_ratio["return_on_equity_pct"]
-        )
-        if previous_ratio is not None
-        and "return_on_equity_pct" in previous_ratio
+        safe_float(previous_ratio["return_on_equity_pct"])
+        if previous_ratio is not None and "return_on_equity_pct" in previous_ratio
         else np.nan
     )
 
@@ -398,9 +358,8 @@ def company_kpis(
 
     roce = np.nan
 
-    if latest_ratio is not None:
-        if "return_on_equity_pct" in latest_ratio:
-            pass
+    if latest_ratio is not None and "return_on_equity_pct" in latest_ratio:
+        pass
 
     # ROCE from companies master if available
     if not company_rows.empty:
@@ -416,20 +375,14 @@ def company_kpis(
     # --------------------------------------------------------
 
     de = (
-        safe_float(
-            latest_ratio["debt_to_equity"]
-        )
-        if latest_ratio is not None
-        and "debt_to_equity" in latest_ratio
+        safe_float(latest_ratio["debt_to_equity"])
+        if latest_ratio is not None and "debt_to_equity" in latest_ratio
         else np.nan
     )
 
     previous_de = (
-        safe_float(
-            previous_ratio["debt_to_equity"]
-        )
-        if previous_ratio is not None
-        and "debt_to_equity" in previous_ratio
+        safe_float(previous_ratio["debt_to_equity"])
+        if previous_ratio is not None and "debt_to_equity" in previous_ratio
         else np.nan
     )
 
@@ -505,7 +458,6 @@ def company_kpis(
             "ROCE": roce,
             "D/E": de,
             "FCF": fcf,
-
             "Revenue_previous": previous_revenue,
             "Net Profit_previous": previous_profit,
             "ROE_previous": previous_roe,
@@ -521,6 +473,7 @@ def company_kpis(
 # ============================================================
 # KPI TABLE
 # ============================================================
+
 
 def kpi_table(data):
 
@@ -648,6 +601,7 @@ def kpi_table(data):
 # ============================================================
 # BUILD ONE COMPANY PAGE
 # ============================================================
+
 
 def company_page(data):
 
@@ -787,9 +741,7 @@ def company_page(data):
                         parent=CELL_CENTER,
                         fontName="Helvetica-Bold",
                         fontSize=13,
-                        textColor=arrow_color(
-                            arrow
-                        ),
+                        textColor=arrow_color(arrow),
                     ),
                 ),
             ]
@@ -893,6 +845,7 @@ def company_page(data):
 # BUILD PORTFOLIO PDF
 # ============================================================
 
+
 def build_portfolio_summary():
 
     (
@@ -903,11 +856,7 @@ def build_portfolio_summary():
         cashflow,
     ) = load_data()
 
-    company_ids = sorted(
-        companies["id"]
-        .astype(str)
-        .unique()
-    )
+    company_ids = sorted(companies["id"].astype(str).unique())
 
     print()
     print("=" * 70)
@@ -915,10 +864,7 @@ def build_portfolio_summary():
     print("=" * 70)
     print("Master companies:", len(company_ids))
 
-    output = (
-        OUTPUT
-        / "portfolio_summary.pdf"
-    )
+    output = OUTPUT / "portfolio_summary.pdf"
 
     doc = SimpleDocTemplate(
         str(output),
@@ -941,9 +887,7 @@ def build_portfolio_summary():
         start=1,
     ):
 
-        print(
-            f"[{index}/{len(company_ids)}] {company_id}"
-        )
+        print(f"[{index}/{len(company_ids)}] {company_id}")
 
         try:
 
@@ -956,26 +900,18 @@ def build_portfolio_summary():
                 cashflow,
             )
 
-            story.extend(
-                company_page(data)
-            )
+            story.extend(company_page(data))
 
             successful += 1
 
             if index < len(company_ids):
-                story.append(
-                    PageBreak()
-                )
+                story.append(PageBreak())
 
         except Exception as exc:
 
-            print(
-                f"FAILED: {company_id} -> {exc}"
-            )
+            print(f"FAILED: {company_id} -> {exc}")
 
-            failed.append(
-                company_id
-            )
+            failed.append(company_id)
 
     doc.build(story)
 

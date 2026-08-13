@@ -1,15 +1,15 @@
-rule,severity,company_id,year,message
-DQ-02,CRITICAL,ADANIPORTS,2013-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2014-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2015-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2016-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2017-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2018-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2019-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2020-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2021-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2022-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2023-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,2024-03,Duplicate company-year
-DQ-02,CRITICAL,ADANIPORTS,TTM,Duplicate company-year
-DQ-06,WARNING,ADANIENSOL,2014-03,Sales <= 0
+company_id,field,issue,severity
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIPORTS,DQ-02,Duplicate company-year,CRITICAL
+ADANIENSOL,DQ-06,Sales <= 0,WARNING

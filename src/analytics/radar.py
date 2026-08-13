@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
-from pathlib import Path
 
 from src.analytics.peer import calculate_peer_rankings
 
@@ -26,30 +27,32 @@ def generate_radar_chart(company_id, filename=None):
         "interest_coverage",
     ]
 
-    values = company[metrics].tolist()  
+    values = company[metrics].tolist()
 
     values += values[:1]
 
     angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False).tolist()
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    _fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"polar": True})
 
     ax.plot(angles, values)
     ax.fill(angles, values, alpha=0.25)
 
     ax.set_xticks(angles[:-1])
-    ax.set_xticklabels([
-        "ROE",
-        "OPM",
-        "Revenue CAGR",
-        "PAT CAGR",
-        "Interest Coverage",
-    ])
-    
+    ax.set_xticklabels(
+        [
+            "ROE",
+            "OPM",
+            "Revenue CAGR",
+            "PAT CAGR",
+            "Interest Coverage",
+        ]
+    )
+
     if filename is None:
-     filename = f"reports/radar_charts/{company_id}_radar.png"
-    
+        filename = f"reports/radar_charts/{company_id}_radar.png"
+
     output = Path(filename)
     output.parent.mkdir(parents=True, exist_ok=True)
 

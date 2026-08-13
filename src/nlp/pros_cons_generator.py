@@ -3,7 +3,6 @@ from pathlib import Path
 
 import pandas as pd
 
-
 # ==================================================
 # PART 1 — PATHS
 # ==================================================
@@ -26,6 +25,7 @@ OUTPUT_DIR.mkdir(
 # ==================================================
 # PART 1 — DATABASE LOADER
 # ==================================================
+
 
 def load_data():
 
@@ -130,9 +130,12 @@ def load_data():
         "sectors": sectors,
         "market_cap": market_cap,
     }
+
+
 # ==================================================
 # PART 2 — GENERAL HELPERS
 # ==================================================
+
 
 def sort_by_year(df):
     """
@@ -151,9 +154,7 @@ def company_rows(df, company_id):
     if "company_id" not in df.columns:
         return pd.DataFrame()
 
-    result = df[
-        df["company_id"] == company_id
-    ].copy()
+    result = df[df["company_id"] == company_id].copy()
 
     if "year" in result.columns:
         result = sort_by_year(result)
@@ -182,67 +183,48 @@ def last_n_values(df, company_id, column, n):
     if rows.empty or column not in rows.columns:
         return []
 
-    return (
-        rows[column]
-        .dropna()
-        .tail(n)
-        .tolist()
-    )
+    return rows[column].dropna().tail(n).tolist()
 
 
 def all_above(values, threshold):
     if not values:
         return False
 
-    return all(
-        value > threshold
-        for value in values
-    )
+    return all(value > threshold for value in values)
 
 
 def all_positive(values):
     if not values:
         return False
 
-    return all(
-        value > 0
-        for value in values
-    )
+    return all(value > 0 for value in values)
 
 
 def all_negative(values):
     if not values:
         return False
 
-    return all(
-        value < 0
-        for value in values
-    )
+    return all(value < 0 for value in values)
 
 
 def strictly_increasing(values):
     if len(values) < 2:
         return False
 
-    return all(
-        values[i] > values[i - 1]
-        for i in range(1, len(values))
-    )
+    return all(values[i] > values[i - 1] for i in range(1, len(values)))
 
 
 def strictly_decreasing(values):
     if len(values) < 2:
         return False
 
-    return all(
-        values[i] < values[i - 1]
-        for i in range(1, len(values))
-    )
+    return all(values[i] < values[i - 1] for i in range(1, len(values)))
 
 
 # ==================================================
 # PART 2 — CAGR
 # ==================================================
+
 
 def calculate_cagr(
     start_value,
@@ -261,11 +243,7 @@ def calculate_cagr(
 
     if start_value > 0 and end_value > 0:
 
-        cagr = (
-            (end_value / start_value)
-            ** (1 / years)
-            - 1
-        ) * 100
+        cagr = ((end_value / start_value) ** (1 / years) - 1) * 100
 
         return round(cagr, 2)
 
@@ -290,18 +268,14 @@ def calculate_period_cagr(
     if rows.empty or column not in rows.columns:
         return None
 
-    rows = rows.dropna(
-        subset=[column]
-    )
+    rows = rows.dropna(subset=[column])
 
     required_rows = years + 1
 
     if len(rows) < required_rows:
         return None
 
-    period = rows.tail(
-        required_rows
-    )
+    period = rows.tail(required_rows)
 
     start_value = period.iloc[0][column]
     end_value = period.iloc[-1][column]
@@ -316,6 +290,7 @@ def calculate_period_cagr(
 # ==================================================
 # PART 2 — CONFIDENCE SCORE
 # ==================================================
+
 
 def calculate_confidence(
     rule_strength,
@@ -364,20 +339,14 @@ def is_financial_company(
     company_id,
 ):
 
-    row = sectors_df[
-        sectors_df["company_id"] == company_id
-    ]
+    row = sectors_df[sectors_df["company_id"] == company_id]
 
     if row.empty:
         return False
 
-    broad_sector = str(
-        row.iloc[0]["broad_sector"]
-    ).strip()
+    broad_sector = str(row.iloc[0]["broad_sector"]).strip()
 
-    sub_sector = str(
-        row.iloc[0]["sub_sector"]
-    ).strip()
+    sub_sector = str(row.iloc[0]["sub_sector"]).strip()
 
     if broad_sector in FINANCIAL_SECTORS:
         return True
@@ -390,19 +359,15 @@ def is_financial_company(
         "nbfc",
     ]
 
-    text = (
-        broad_sector
-        + " "
-        + sub_sector
-    ).lower()
+    text = (broad_sector + " " + sub_sector).lower()
 
-    return any(
-        keyword in text
-        for keyword in financial_keywords
-    )
+    return any(keyword in text for keyword in financial_keywords)
+
+
 # ==================================================
 # PART 3 — PRO RULES 01–06
 # ==================================================
+
 
 def generate_pro_rules_1_to_6(
     company_id,
@@ -426,10 +391,7 @@ def generate_pro_rules_1_to_6(
         3,
     )
 
-    if (
-        len(roe_values) == 3
-        and all_above(roe_values, 20)
-    ):
+    if len(roe_values) == 3 and all_above(roe_values, 20):
         results.append(
             {
                 "company_id": company_id,
@@ -440,9 +402,7 @@ def generate_pro_rules_1_to_6(
                     "above 20% demonstrates exceptional "
                     "capital efficiency"
                 ),
-                "confidence_pct": calculate_confidence(
-                    min(roe_values) - 20
-                ),
+                "confidence_pct": calculate_confidence(min(roe_values) - 20),
             }
         )
 
@@ -458,10 +418,7 @@ def generate_pro_rules_1_to_6(
         5,
     )
 
-    if (
-        len(fcf_values) == 5
-        and all_positive(fcf_values)
-    ):
+    if len(fcf_values) == 5 and all_positive(fcf_values):
         results.append(
             {
                 "company_id": company_id,
@@ -473,10 +430,12 @@ def generate_pro_rules_1_to_6(
                     "business fundamentals"
                 ),
                 "confidence_pct": calculate_confidence(
-                    min(fcf_values) / max(
+                    min(fcf_values)
+                    / max(
                         abs(max(fcf_values)),
                         1,
-                    ) * 30
+                    )
+                    * 30
                 ),
             }
         )
@@ -493,14 +452,9 @@ def generate_pro_rules_1_to_6(
 
     if latest_ratio is not None:
 
-        debt_to_equity = latest_ratio[
-            "debt_to_equity"
-        ]
+        debt_to_equity = latest_ratio["debt_to_equity"]
 
-        if (
-            pd.notna(debt_to_equity)
-            and abs(float(debt_to_equity)) < 1e-9
-        ):
+        if pd.notna(debt_to_equity) and abs(float(debt_to_equity)) < 1e-9:
             results.append(
                 {
                     "company_id": company_id,
@@ -527,10 +481,7 @@ def generate_pro_rules_1_to_6(
         5,
     )
 
-    if (
-        revenue_cagr_5y is not None
-        and revenue_cagr_5y > 15
-    ):
+    if revenue_cagr_5y is not None and revenue_cagr_5y > 15:
         results.append(
             {
                 "company_id": company_id,
@@ -541,9 +492,7 @@ def generate_pro_rules_1_to_6(
                     "over 5 years reflects strong "
                     "business momentum"
                 ),
-                "confidence_pct": calculate_confidence(
-                    revenue_cagr_5y - 15
-                ),
+                "confidence_pct": calculate_confidence(revenue_cagr_5y - 15),
             }
         )
 
@@ -554,14 +503,9 @@ def generate_pro_rules_1_to_6(
 
     if latest_ratio is not None:
 
-        opm = latest_ratio[
-            "operating_profit_margin_pct"
-        ]
+        opm = latest_ratio["operating_profit_margin_pct"]
 
-        if (
-            pd.notna(opm)
-            and float(opm) > 25
-        ):
+        if pd.notna(opm) and float(opm) > 25:
             results.append(
                 {
                     "company_id": company_id,
@@ -572,9 +516,7 @@ def generate_pro_rules_1_to_6(
                         "25% indicates strong pricing "
                         "power and cost discipline"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        float(opm) - 25
-                    ),
+                    "confidence_pct": calculate_confidence(float(opm) - 25),
                 }
             )
 
@@ -590,10 +532,7 @@ def generate_pro_rules_1_to_6(
         5,
     )
 
-    if (
-        pat_cagr_5y is not None
-        and pat_cagr_5y > 20
-    ):
+    if pat_cagr_5y is not None and pat_cagr_5y > 20:
         results.append(
             {
                 "company_id": company_id,
@@ -604,16 +543,17 @@ def generate_pro_rules_1_to_6(
                     "20% over 5 years creates "
                     "significant shareholder value"
                 ),
-                "confidence_pct": calculate_confidence(
-                    pat_cagr_5y - 20
-                ),
+                "confidence_pct": calculate_confidence(pat_cagr_5y - 20),
             }
         )
 
     return results
+
+
 # ==================================================
 # PART 4 — PRO RULES 07–12
 # ==================================================
+
 
 def generate_pro_rules_7_to_12(
     company_id,
@@ -642,25 +582,16 @@ def generate_pro_rules_7_to_12(
         icr = latest_ratio["interest_coverage"]
         de = latest_ratio["debt_to_equity"]
 
-        debt_free = (
-            pd.notna(de)
-            and abs(float(de)) < 1e-9
-        )
+        debt_free = pd.notna(de) and abs(float(de)) < 1e-9
 
-        high_coverage = (
-            pd.notna(icr)
-            and float(icr) > 10
-        )
+        high_coverage = pd.notna(icr) and float(icr) > 10
 
         if high_coverage or debt_free:
 
             strength = 30
 
             if high_coverage:
-                strength = min(
-                    30,
-                    float(icr) - 10
-                )
+                strength = min(30, float(icr) - 10)
 
             results.append(
                 {
@@ -672,9 +603,7 @@ def generate_pro_rules_7_to_12(
                         "reflects negligible financial stress "
                         "from debt servicing"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        strength
-                    ),
+                    "confidence_pct": calculate_confidence(strength),
                 }
             )
 
@@ -695,22 +624,13 @@ def generate_pro_rules_7_to_12(
         1,
     )
 
-    if (
-        latest_market is not None
-        and fcf_values
-    ):
+    if latest_market is not None and fcf_values:
 
-        dividend_yield = latest_market[
-            "dividend_yield_pct"
-        ]
+        dividend_yield = latest_market["dividend_yield_pct"]
 
         latest_fcf = fcf_values[-1]
 
-        if (
-            pd.notna(dividend_yield)
-            and float(dividend_yield) > 2
-            and latest_fcf > 0
-        ):
+        if pd.notna(dividend_yield) and float(dividend_yield) > 2 and latest_fcf > 0:
 
             results.append(
                 {
@@ -721,9 +641,7 @@ def generate_pro_rules_7_to_12(
                         "Consistent dividend yield above 2% "
                         "backed by positive free cash flow"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        float(dividend_yield) - 2
-                    ),
+                    "confidence_pct": calculate_confidence(float(dividend_yield) - 2),
                 }
             )
 
@@ -739,10 +657,7 @@ def generate_pro_rules_7_to_12(
         5,
     )
 
-    if (
-        eps_cagr_5y is not None
-        and eps_cagr_5y > 15
-    ):
+    if eps_cagr_5y is not None and eps_cagr_5y > 15:
 
         results.append(
             {
@@ -754,9 +669,7 @@ def generate_pro_rules_7_to_12(
                     "15% CAGR indicates strong earnings "
                     "quality and compounding"
                 ),
-                "confidence_pct": calculate_confidence(
-                    eps_cagr_5y - 15
-                ),
+                "confidence_pct": calculate_confidence(eps_cagr_5y - 15),
             }
         )
 
@@ -772,10 +685,7 @@ def generate_pro_rules_7_to_12(
         4,
     )
 
-    if (
-        len(roe_values) == 4
-        and strictly_increasing(roe_values)
-    ):
+    if len(roe_values) == 4 and strictly_increasing(roe_values):
 
         results.append(
             {
@@ -787,9 +697,7 @@ def generate_pro_rules_7_to_12(
                     "3 consecutive years shows "
                     "strengthening business quality"
                 ),
-                "confidence_pct": calculate_confidence(
-                    roe_values[-1] - roe_values[0]
-                ),
+                "confidence_pct": calculate_confidence(roe_values[-1] - roe_values[0]),
             }
         )
 
@@ -812,11 +720,7 @@ def generate_pro_rules_7_to_12(
         5,
     )
 
-    if (
-        revenue_cagr is not None
-        and pat_cagr is not None
-        and revenue_cagr < pat_cagr
-    ):
+    if revenue_cagr is not None and pat_cagr is not None and revenue_cagr < pat_cagr:
 
         results.append(
             {
@@ -828,9 +732,7 @@ def generate_pro_rules_7_to_12(
                     "shows improving operating leverage "
                     "and scale benefits"
                 ),
-                "confidence_pct": calculate_confidence(
-                    pat_cagr - revenue_cagr
-                ),
+                "confidence_pct": calculate_confidence(pat_cagr - revenue_cagr),
             }
         )
 
@@ -857,20 +759,11 @@ def generate_pro_rules_7_to_12(
 
             recent = balance_rows.tail(4)
 
-            assets = recent[
-                "total_assets"
-            ].tolist()
+            assets = recent["total_assets"].tolist()
 
-            borrowings = recent[
-                "borrowings"
-            ].tolist()
+            borrowings = recent["borrowings"].tolist()
 
-            if (
-                strictly_increasing(assets)
-                and strictly_decreasing(
-                    borrowings
-                )
-            ):
+            if strictly_increasing(assets) and strictly_decreasing(borrowings):
 
                 results.append(
                     {
@@ -882,17 +775,17 @@ def generate_pro_rules_7_to_12(
                             "internal accruals reflects "
                             "self-sustaining growth"
                         ),
-                        "confidence_pct": calculate_confidence(
-                            20
-                        ),
+                        "confidence_pct": calculate_confidence(20),
                     }
                 )
 
     return results
 
+
 # ==================================================
 # PART 5 — CON RULES 01–12
 # ==================================================
+
 
 def generate_con_rules_1_to_6(
     company_id,
@@ -938,9 +831,7 @@ def generate_con_rules_1_to_6(
                         "a non-financial company and "
                         "warrants monitoring"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        (float(de) - 2) * 10
-                    ),
+                    "confidence_pct": calculate_confidence((float(de) - 2) * 10),
                 }
             )
 
@@ -956,10 +847,7 @@ def generate_con_rules_1_to_6(
         3,
     )
 
-    if (
-        len(fcf_values) == 3
-        and all_negative(fcf_values)
-    ):
+    if len(fcf_values) == 3 and all_negative(fcf_values):
         results.append(
             {
                 "company_id": company_id,
@@ -970,9 +858,7 @@ def generate_con_rules_1_to_6(
                     "consecutive years raises concern "
                     "about cash generation quality"
                 ),
-                "confidence_pct": calculate_confidence(
-                    20
-                ),
+                "confidence_pct": calculate_confidence(20),
             }
         )
 
@@ -988,10 +874,7 @@ def generate_con_rules_1_to_6(
         4,
     )
 
-    if (
-        len(opm_values) == 4
-        and strictly_decreasing(opm_values)
-    ):
+    if len(opm_values) == 4 and strictly_decreasing(opm_values):
         results.append(
             {
                 "company_id": company_id,
@@ -1003,10 +886,7 @@ def generate_con_rules_1_to_6(
                     "pricing or cost pressure"
                 ),
                 "confidence_pct": calculate_confidence(
-                    abs(
-                        opm_values[-1]
-                        - opm_values[0]
-                    )
+                    abs(opm_values[-1] - opm_values[0])
                 ),
             }
         )
@@ -1023,14 +903,9 @@ def generate_con_rules_1_to_6(
 
     if latest_pnl is not None:
 
-        net_profit = latest_pnl[
-            "net_profit"
-        ]
+        net_profit = latest_pnl["net_profit"]
 
-        if (
-            pd.notna(net_profit)
-            and float(net_profit) < 0
-        ):
+        if pd.notna(net_profit) and float(net_profit) < 0:
             results.append(
                 {
                     "company_id": company_id,
@@ -1043,11 +918,7 @@ def generate_con_rules_1_to_6(
                     "confidence_pct": calculate_confidence(
                         abs(float(net_profit))
                         / max(
-                            abs(
-                                float(
-                                    latest_pnl["sales"]
-                                )
-                            ),
+                            abs(float(latest_pnl["sales"])),
                             1,
                         )
                         * 100
@@ -1067,12 +938,7 @@ def generate_con_rules_1_to_6(
         3,
     )
 
-    if (
-        len(sales_values) == 3
-        and strictly_decreasing(
-            sales_values
-        )
-    ):
+    if len(sales_values) == 3 and strictly_decreasing(sales_values):
         results.append(
             {
                 "company_id": company_id,
@@ -1084,10 +950,7 @@ def generate_con_rules_1_to_6(
                     "weakness or market share loss"
                 ),
                 "confidence_pct": calculate_confidence(
-                    (
-                        sales_values[0]
-                        - sales_values[-1]
-                    )
+                    (sales_values[0] - sales_values[-1])
                     / max(
                         abs(sales_values[0]),
                         1,
@@ -1104,14 +967,9 @@ def generate_con_rules_1_to_6(
 
     if latest_ratio is not None:
 
-        icr = latest_ratio[
-            "interest_coverage"
-        ]
+        icr = latest_ratio["interest_coverage"]
 
-        if (
-            pd.notna(icr)
-            and float(icr) < 1.5
-        ):
+        if pd.notna(icr) and float(icr) < 1.5:
             results.append(
                 {
                     "company_id": company_id,
@@ -1123,9 +981,7 @@ def generate_con_rules_1_to_6(
                         "risk of not meeting its debt "
                         "obligations"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        (1.5 - float(icr)) * 20
-                    ),
+                    "confidence_pct": calculate_confidence((1.5 - float(icr)) * 20),
                 }
             )
 
@@ -1135,6 +991,7 @@ def generate_con_rules_1_to_6(
 # ==================================================
 # CON RULES 07–12
 # ==================================================
+
 
 def generate_con_rules_7_to_12(
     company_id,
@@ -1146,10 +1003,10 @@ def generate_con_rules_7_to_12(
     ratios = data["ratios"]
     pnl = data["pnl"]
     balance = data["balance"]
-    market_cap = data["market_cap"]
+    data["market_cap"]
     companies = data["companies"]
 
-    latest_ratio = latest_row(
+    latest_row(
         ratios,
         company_id,
     )
@@ -1166,14 +1023,9 @@ def generate_con_rules_7_to_12(
 
     if latest_pnl is not None:
 
-        payout = latest_pnl[
-            "dividend_payout"
-        ]
+        payout = latest_pnl["dividend_payout"]
 
-        if (
-            pd.notna(payout)
-            and float(payout) > 100
-        ):
+        if pd.notna(payout) and float(payout) > 100:
             results.append(
                 {
                     "company_id": company_id,
@@ -1185,9 +1037,7 @@ def generate_con_rules_7_to_12(
                         "dividends from reserves, which "
                         "is unsustainable"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        float(payout) - 100
-                    ),
+                    "confidence_pct": calculate_confidence(float(payout) - 100),
                 }
             )
 
@@ -1203,10 +1053,7 @@ def generate_con_rules_7_to_12(
         4,
     )
 
-    if (
-        len(de_values) == 4
-        and strictly_increasing(de_values)
-    ):
+    if len(de_values) == 4 and strictly_increasing(de_values):
         results.append(
             {
                 "company_id": company_id,
@@ -1218,11 +1065,7 @@ def generate_con_rules_7_to_12(
                     "financial leverage risk"
                 ),
                 "confidence_pct": calculate_confidence(
-                    (
-                        de_values[-1]
-                        - de_values[0]
-                    )
-                    * 20
+                    (de_values[-1] - de_values[0]) * 20
                 ),
             }
         )
@@ -1239,12 +1082,7 @@ def generate_con_rules_7_to_12(
         4,
     )
 
-    if (
-        len(eps_values) == 4
-        and strictly_decreasing(
-            eps_values
-        )
-    ):
+    if len(eps_values) == 4 and strictly_decreasing(eps_values):
         results.append(
             {
                 "company_id": company_id,
@@ -1256,10 +1094,7 @@ def generate_con_rules_7_to_12(
                     "deteriorating profitability"
                 ),
                 "confidence_pct": calculate_confidence(
-                    abs(
-                        eps_values[-1]
-                        - eps_values[0]
-                    )
+                    abs(eps_values[-1] - eps_values[0])
                 ),
             }
         )
@@ -1269,20 +1104,13 @@ def generate_con_rules_7_to_12(
     # ROCE < 10%
     # --------------------------------------------------
 
-    company_row = companies[
-        companies["company_id"] == company_id
-    ]
+    company_row = companies[companies["company_id"] == company_id]
 
     if not company_row.empty:
 
-        roce = company_row.iloc[0][
-            "roce_percentage"
-        ]
+        roce = company_row.iloc[0]["roce_percentage"]
 
-        if (
-            pd.notna(roce)
-            and float(roce) < 10
-        ):
+        if pd.notna(roce) and float(roce) < 10:
             results.append(
                 {
                     "company_id": company_id,
@@ -1294,9 +1122,7 @@ def generate_con_rules_7_to_12(
                         "is not generating sufficient "
                         "returns on invested capital"
                     ),
-                    "confidence_pct": calculate_confidence(
-                        (10 - float(roce)) * 5
-                    ),
+                    "confidence_pct": calculate_confidence((10 - float(roce)) * 5),
                 }
             )
 
@@ -1323,22 +1149,13 @@ def generate_con_rules_7_to_12(
         company_id,
     )
 
-    if (
-        balance_latest is not None
-        and pnl_latest is not None
-    ):
+    if balance_latest is not None and pnl_latest is not None:
 
-        borrowings = balance_latest[
-            "borrowings"
-        ]
+        borrowings = balance_latest["borrowings"]
 
-        operating_profit = pnl_latest[
-            "operating_profit"
-        ]
+        operating_profit = pnl_latest["operating_profit"]
 
-        depreciation = pnl_latest[
-            "depreciation"
-        ]
+        depreciation = pnl_latest["depreciation"]
 
         if (
             pd.notna(borrowings)
@@ -1346,17 +1163,11 @@ def generate_con_rules_7_to_12(
             and pd.notna(depreciation)
         ):
 
-            ebitda = (
-                float(operating_profit)
-                + float(depreciation)
-            )
+            ebitda = float(operating_profit) + float(depreciation)
 
             if ebitda > 0:
 
-                net_debt_to_ebitda = (
-                    float(borrowings)
-                    / ebitda
-                )
+                net_debt_to_ebitda = float(borrowings) / ebitda
 
                 if net_debt_to_ebitda > 3:
 
@@ -1372,11 +1183,7 @@ def generate_con_rules_7_to_12(
                                 "flexibility"
                             ),
                             "confidence_pct": calculate_confidence(
-                                (
-                                    net_debt_to_ebitda
-                                    - 3
-                                )
-                                * 10
+                                (net_debt_to_ebitda - 3) * 10
                             ),
                         }
                     )
@@ -1393,10 +1200,7 @@ def generate_con_rules_7_to_12(
         5,
     )
 
-    if (
-        revenue_cagr_5y is not None
-        and revenue_cagr_5y < 5
-    ):
+    if revenue_cagr_5y is not None and revenue_cagr_5y < 5:
         results.append(
             {
                 "company_id": company_id,
@@ -1407,17 +1211,17 @@ def generate_con_rules_7_to_12(
                     "over 5 years lags inflation and "
                     "suggests limited business momentum"
                 ),
-                "confidence_pct": calculate_confidence(
-                    abs(5 - revenue_cagr_5y)
-                ),
+                "confidence_pct": calculate_confidence(abs(5 - revenue_cagr_5y)),
             }
         )
 
     return results
 
+
 # ==================================================
 # PART 6 — VALIDATION + MAIN + OUTPUT
 # ==================================================
+
 
 def validate_loaded_data(data):
 
@@ -1428,23 +1232,17 @@ def validate_loaded_data(data):
     for name, df in data.items():
 
         if "company_id" in df.columns:
-            company_count = (
-                df["company_id"]
-                .nunique()
-            )
+            company_count = df["company_id"].nunique()
         else:
             company_count = 0
 
-        print(
-            f"{name:<12} "
-            f"rows={len(df):<5} "
-            f"companies={company_count}"
-        )
+        print(f"{name:<12} " f"rows={len(df):<5} " f"companies={company_count}")
 
 
 # ==================================================
 # FALLBACK HELPERS
 # ==================================================
+
 
 def create_fallback_pro(company_id):
     """
@@ -1493,6 +1291,7 @@ def create_fallback_con(company_id):
 # OUTPUT VALIDATION
 # ==================================================
 
+
 def validate_output(
     companies,
     output_df,
@@ -1502,76 +1301,43 @@ def validate_output(
     print("Final Day 30 Validation")
     print("------------------------------")
 
-    expected_companies = set(
-        companies["company_id"]
-    )
+    expected_companies = set(companies["company_id"])
 
-    output_companies = set(
-        output_df["company_id"]
-    )
+    output_companies = set(output_df["company_id"])
 
-    pro_companies = set(
-        output_df[
-            output_df["type"] == "pro"
-        ]["company_id"]
-    )
+    pro_companies = set(output_df[output_df["type"] == "pro"]["company_id"])
 
-    con_companies = set(
-        output_df[
-            output_df["type"] == "con"
-        ]["company_id"]
-    )
+    con_companies = set(output_df[output_df["type"] == "con"]["company_id"])
 
-    missing_from_output = (
-        expected_companies
-        - output_companies
-    )
+    missing_from_output = expected_companies - output_companies
 
-    missing_pro = (
-        expected_companies
-        - pro_companies
-    )
+    missing_pro = expected_companies - pro_companies
 
-    missing_con = (
-        expected_companies
-        - con_companies
+    missing_con = expected_companies - con_companies
+
+    print(f"Generated rows : {len(output_df)}")
+
+    print(
+        f"Companies with Pro : " f"{len(pro_companies)} / " f"{len(expected_companies)}"
     )
 
     print(
-        f"Generated rows : {len(output_df)}"
-    )
-
-    print(
-        f"Companies with Pro : "
-        f"{len(pro_companies)} / "
-        f"{len(expected_companies)}"
-    )
-
-    print(
-        f"Companies with Con : "
-        f"{len(con_companies)} / "
-        f"{len(expected_companies)}"
+        f"Companies with Con : " f"{len(con_companies)} / " f"{len(expected_companies)}"
     )
 
     if missing_from_output:
         print("\nMissing from output:")
-        print(
-            sorted(missing_from_output)
-        )
+        print(sorted(missing_from_output))
 
     if missing_pro:
         print("\nMissing Pro:")
-        print(
-            sorted(missing_pro)
-        )
+        print(sorted(missing_pro))
     else:
         print("\nMissing Pro: NONE")
 
     if missing_con:
         print("\nMissing Con:")
-        print(
-            sorted(missing_con)
-        )
+        print(sorted(missing_con))
     else:
         print("\nMissing Con: NONE")
 
@@ -1579,23 +1345,13 @@ def validate_output(
     # Confidence validation
     # ----------------------------------------------
 
-    missing_confidence = output_df[
-        output_df["confidence_pct"].isna()
-    ]
+    missing_confidence = output_df[output_df["confidence_pct"].isna()]
 
-    low_confidence = output_df[
-        output_df["confidence_pct"] <= 60
-    ]
+    low_confidence = output_df[output_df["confidence_pct"] <= 60]
 
-    print(
-        "\nMissing confidence : "
-        f"{len(missing_confidence)}"
-    )
+    print("\nMissing confidence : " f"{len(missing_confidence)}")
 
-    print(
-        "Confidence <= 60 : "
-        f"{len(low_confidence)}"
-    )
+    print("Confidence <= 60 : " f"{len(low_confidence)}")
 
     # ----------------------------------------------
     # Final status
@@ -1610,13 +1366,9 @@ def validate_output(
     )
 
     if complete:
-        print(
-            "\nSTATUS: DAY 30 COMPLETE"
-        )
+        print("\nSTATUS: DAY 30 COMPLETE")
     else:
-        print(
-            "\nSTATUS: DAY 30 NEEDS REVIEW"
-        )
+        print("\nSTATUS: DAY 30 NEEDS REVIEW")
 
     return complete
 
@@ -1625,24 +1377,18 @@ def validate_output(
 # MAIN
 # ==================================================
 
+
 def main():
 
-    print(
-        "Loading Day 30 financial data..."
-    )
+    print("Loading Day 30 financial data...")
 
     data = load_data()
 
     companies = data["companies"]
 
-    total_companies = len(
-        companies
-    )
+    total_companies = len(companies)
 
-    print(
-        f"\nProcessing "
-        f"{total_companies} companies..."
-    )
+    print(f"\nProcessing " f"{total_companies} companies...")
 
     all_results = []
 
@@ -1650,9 +1396,7 @@ def main():
     # PROCESS EVERY COMPANY
     # ==================================================
 
-    for company_id in companies[
-        "company_id"
-    ].tolist():
+    for company_id in companies["company_id"].tolist():
 
         # ----------------------------------------------
         # PRO RULES 01–06
@@ -1699,22 +1443,14 @@ def main():
         # ----------------------------------------------
 
         if not pros:
-            pros.append(
-                create_fallback_pro(
-                    company_id
-                )
-            )
+            pros.append(create_fallback_pro(company_id))
 
         # ----------------------------------------------
         # FALLBACK CON
         # ----------------------------------------------
 
         if not cons:
-            cons.append(
-                create_fallback_con(
-                    company_id
-                )
-            )
+            cons.append(create_fallback_con(company_id))
 
         # ----------------------------------------------
         # Add results
@@ -1742,17 +1478,13 @@ def main():
     # CLEAN CONFIDENCE
     # ==================================================
 
-    output_df[
-        "confidence_pct"
-    ] = pd.to_numeric(
+    output_df["confidence_pct"] = pd.to_numeric(
         output_df["confidence_pct"],
         errors="coerce",
     )
 
     # Keep only confidence > 60
-    output_df = output_df[
-        output_df["confidence_pct"] > 60
-    ].copy()
+    output_df = output_df[output_df["confidence_pct"] > 60].copy()
 
     # ==================================================
     # SAVE OUTPUT
@@ -1767,26 +1499,18 @@ def main():
     # VALIDATION
     # ==================================================
 
-    validate_loaded_data(
-        data
-    )
+    validate_loaded_data(data)
 
     validate_output(
         companies,
         output_df,
     )
 
-    print(
-        "\nOutput File:"
-    )
+    print("\nOutput File:")
 
-    print(
-        OUTPUT_FILE
-    )
+    print(OUTPUT_FILE)
 
-    print(
-        "\nDay 30 processing completed."
-    )
+    print("\nDay 30 processing completed.")
 
 
 # ==================================================

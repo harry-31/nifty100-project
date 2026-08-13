@@ -4,9 +4,9 @@ ROE not computed (negative/zero equity): 109 rows
 Interest Coverage unavailable (interest = 0): 47 rows
 Debt Free companies: 136 rows
 Asset Turnover unavailable: 110 rows
-Revenue CAGR unavailable: 12 rows
-PAT CAGR unavailable: 73 rows
-EPS CAGR unavailable: 108 rows
+Revenue CAGR unavailable: 3 rows
+PAT CAGR unavailable: 81 rows
+EPS CAGR unavailable: 88 rows
 
 Review Category:
 - Data source issue
