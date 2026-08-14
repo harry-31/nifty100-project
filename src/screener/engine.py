@@ -25,6 +25,7 @@ def load_config():
     with open(CONFIG_PATH, "r") as file:
         return yaml.safe_load(file)
 
+
 def apply_filters(filters):
     """
     Apply dynamic filters to the latest non-TTM financial ratios for each company.
@@ -71,8 +72,7 @@ def apply_filters(filters):
 
     if "operating_profit_margin_min" in filters:
         df = df[
-            df["operating_profit_margin_pct"]
-            >= filters["operating_profit_margin_min"]
+            df["operating_profit_margin_pct"] >= filters["operating_profit_margin_min"]
         ]
 
     if "net_profit_margin_min" in filters:

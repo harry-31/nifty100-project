@@ -172,7 +172,7 @@ def normalize_year(value):
 
     try:
         return int(float(value))
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return np.nan
 
 
@@ -715,7 +715,7 @@ def main():
 
             generated.append(sector)
 
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
 
             print(
                 "FAILED:",

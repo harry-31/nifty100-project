@@ -1,17 +1,9 @@
-import re
+﻿import re
 import sqlite3
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from reportlab.graphics.charts.barcharts import VerticalBarChart
-from reportlab.graphics.charts.linecharts import HorizontalLineChart
-from reportlab.graphics.shapes import (
-    Drawing,
-    Line,
-    Rect,
-    String,
-)
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER
 from reportlab.lib.pagesizes import A4
@@ -134,7 +126,7 @@ def safe_float(value):
         if pd.isna(value):
             return None
         return float(value)
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return None
 
 
@@ -644,233 +636,9 @@ print("Part 3 loaded")
 # ============================================================
 
 
-def create_revenue_profit_png(data, company_id):
-
-    pnl = data["pnl"].copy()
-
-    if pnl.empty:
-        return Drawing(520, 155)
-
-    revenue_col = first_existing(
-        pnl.columns,
-        [
-            "sales",
-            "revenue",
-            "total_revenue",
-        ],
-    )
-
-    profit_col = first_existing(
-        pnl.columns,
-        [
-            "net_profit",
-            "net_profit_after_tax",
-            "pat",
-        ],
-    )
-
-    if not revenue_col or not profit_col:
-        return Drawing(520, 155)
-
-    if "year_num" not in pnl.columns:
-        pnl["year_num"] = pnl["year"].apply(normalize_year)
-
-    x = pnl[
-        [
-            "year_num",
-            revenue_col,
-            profit_col,
-        ]
-    ].copy()
-
-    x["year_num"] = pd.to_numeric(
-        x["year_num"],
-        errors="coerce",
-    )
-
-    x[revenue_col] = pd.to_numeric(
-        x[revenue_col],
-        errors="coerce",
-    )
-
-    x[profit_col] = pd.to_numeric(
-        x[profit_col],
-        errors="coerce",
-    )
-
-    x = (
-        x.dropna(
-            subset=[
-                "year_num",
-                revenue_col,
-                profit_col,
-            ]
-        )
-        .sort_values("year_num")
-        .tail(10)
-    )
-
-    if x.empty:
-        return Drawing(520, 155)
-
-    d = Drawing(520, 155)
-
-    chart = VerticalBarChart()
-
-    chart.x = 45
-    chart.y = 25
-    chart.width = 450
-    chart.height = 105
-
-    chart.data = [
-        x[revenue_col].tolist(),
-        x[profit_col].tolist(),
-    ]
-
-    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
-
-    chart.categoryAxis.labels.fontSize = 6
-    chart.categoryAxis.labels.angle = 0
-
-    chart.valueAxis.labels.fontSize = 6
-
-    chart.groupSpacing = 8
-    chart.barWidth = 8
-
-    chart.bars[0].fillColor = NAVY
-    chart.bars[1].fillColor = GREEN
-
-    d.add(chart)
-
-    d.add(
-        String(
-            55,
-            143,
-            "Revenue",
-            fontSize=7,
-            fillColor=NAVY,
-        )
-    )
-
-    d.add(
-        String(
-            105,
-            143,
-            "Net Profit",
-            fontSize=7,
-            fillColor=GREEN,
-        )
-    )
-
-    return d
-
-
 # ============================================================
 # ROE + ROCE LINE CHART
 # ============================================================
-
-
-def create_roe_roce_png(data, company_id):
-
-    ratios = data["ratios"].copy()
-
-    if ratios.empty:
-        return Drawing(520, 155)
-
-    roe_col = first_existing(
-        ratios.columns,
-        [
-            "return_on_equity_pct",
-            "roe",
-            "ROE",
-        ],
-    )
-
-    if not roe_col:
-        return Drawing(520, 155)
-
-    if "year_num" not in ratios.columns:
-        ratios["year_num"] = ratios["year"].apply(normalize_year)
-
-    roe_data = ratios[
-        [
-            "year_num",
-            roe_col,
-        ]
-    ].copy()
-
-    roe_data["year_num"] = pd.to_numeric(
-        roe_data["year_num"],
-        errors="coerce",
-    )
-
-    roe_data[roe_col] = pd.to_numeric(
-        roe_data[roe_col],
-        errors="coerce",
-    )
-
-    roce_data = calculate_roce_series(data)
-
-    x = roe_data.merge(
-        roce_data,
-        on="year_num",
-        how="left",
-    )
-
-    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
-
-    if x.empty:
-        return Drawing(520, 155)
-
-    d = Drawing(520, 155)
-
-    chart = HorizontalLineChart()
-
-    chart.x = 45
-    chart.y = 25
-    chart.width = 450
-    chart.height = 105
-
-    chart.data = [
-        [safe_float(v) or 0 for v in x[roe_col]],
-        [safe_float(v) or 0 for v in x["roce"]],
-    ]
-
-    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
-
-    chart.categoryAxis.labels.fontSize = 6
-
-    chart.valueAxis.labels.fontSize = 6
-
-    chart.lines[0].strokeColor = NAVY
-    chart.lines[0].strokeWidth = 1.5
-
-    chart.lines[1].strokeColor = GREEN
-    chart.lines[1].strokeWidth = 1.5
-
-    d.add(chart)
-
-    d.add(
-        String(
-            55,
-            143,
-            "ROE",
-            fontSize=7,
-            fillColor=NAVY,
-        )
-    )
-
-    d.add(
-        String(
-            90,
-            143,
-            "ROCE",
-            fontSize=7,
-            fillColor=GREEN,
-        )
-    )
-
-    return d
 
 
 print("Part 4 loaded")
@@ -879,255 +647,9 @@ print("Part 4 loaded")
 # ============================================================
 
 
-def create_balance_png(data, company_id):
-
-    balance = data["balance"].copy()
-
-    if balance.empty:
-        return Drawing(520, 155)
-
-    if "year_num" not in balance.columns:
-        balance["year_num"] = balance["year"].apply(normalize_year)
-
-    required = [
-        "year_num",
-        "equity_capital",
-        "reserves",
-        "borrowings",
-        "other_liabilities",
-    ]
-
-    if any(col not in balance.columns for col in required):
-        return Drawing(520, 155)
-
-    x = balance[required].copy()
-
-    x["year_num"] = pd.to_numeric(
-        x["year_num"],
-        errors="coerce",
-    )
-
-    for col in [
-        "equity_capital",
-        "reserves",
-        "borrowings",
-        "other_liabilities",
-    ]:
-        x[col] = pd.to_numeric(
-            x[col],
-            errors="coerce",
-        ).fillna(0)
-
-    x = x.dropna(subset=["year_num"]).sort_values("year_num").tail(10)
-
-    if x.empty:
-        return Drawing(520, 155)
-
-    # Equity = equity capital + reserves
-    x["equity"] = x["equity_capital"] + x["reserves"]
-
-    d = Drawing(520, 155)
-
-    chart = VerticalBarChart()
-
-    chart.x = 45
-    chart.y = 25
-    chart.width = 450
-    chart.height = 105
-
-    chart.data = [
-        x["equity"].tolist(),
-        x["borrowings"].tolist(),
-        x["other_liabilities"].tolist(),
-    ]
-
-    chart.categoryAxis.categoryNames = [str(int(year)) for year in x["year_num"]]
-
-    chart.categoryAxis.labels.fontSize = 6
-    chart.valueAxis.labels.fontSize = 6
-
-    chart.groupSpacing = 8
-    chart.barWidth = 8
-
-    chart.bars[0].fillColor = NAVY
-    chart.bars[1].fillColor = RED
-    chart.bars[2].fillColor = MID_GREY
-
-    d.add(chart)
-
-    d.add(
-        String(
-            55,
-            143,
-            "Equity",
-            fontSize=7,
-            fillColor=NAVY,
-        )
-    )
-
-    d.add(
-        String(
-            105,
-            143,
-            "Borrowings",
-            fontSize=7,
-            fillColor=RED,
-        )
-    )
-
-    d.add(
-        String(
-            170,
-            143,
-            "Other Liabilities",
-            fontSize=7,
-            fillColor=MID_GREY,
-        )
-    )
-
-    return d
-
-
 # ============================================================
 # CASH FLOW WATERFALL
 # ============================================================
-
-
-def create_cashflow_png(data, company_id):
-
-    cashflow = data["cashflow"].copy()
-
-    d = Drawing(520, 170)
-
-    if cashflow.empty:
-        return d
-
-    if "year_num" not in cashflow.columns:
-        cashflow["year_num"] = cashflow["year"].apply(normalize_year)
-
-    required = [
-        "year_num",
-        "operating_activity",
-        "investing_activity",
-        "financing_activity",
-        "net_cash_flow",
-    ]
-
-    if any(col not in cashflow.columns for col in required):
-        return d
-
-    x = cashflow[required].copy()
-
-    x["year_num"] = pd.to_numeric(
-        x["year_num"],
-        errors="coerce",
-    )
-
-    for col in required[1:]:
-        x[col] = pd.to_numeric(
-            x[col],
-            errors="coerce",
-        )
-
-    x = x.dropna(subset=["year_num"]).sort_values("year_num")
-
-    if x.empty:
-        return d
-
-    row = x.iloc[-1]
-
-    values = [
-        safe_float(row["operating_activity"]),
-        safe_float(row["investing_activity"]),
-        safe_float(row["financing_activity"]),
-        safe_float(row["net_cash_flow"]),
-    ]
-
-    labels = [
-        "CFO",
-        "CFI",
-        "CFF",
-        "Net Cash Flow",
-    ]
-
-    # Replace missing values with zero
-    values = [0 if value is None else value for value in values]
-
-    max_abs = max([abs(value) for value in values] + [1])
-
-    baseline = 65
-    bar_width = 70
-    gap = 40
-
-    # Baseline
-    d.add(
-        Line(
-            20,
-            baseline,
-            500,
-            baseline,
-            strokeColor=DARK,
-            strokeWidth=0.6,
-        )
-    )
-
-    for i, (label, value) in enumerate(zip(labels, values)):
-
-        x_pos = 25 + i * (bar_width + gap)
-
-        height = abs(value) / max_abs * 75
-
-        height = max(height, 2)
-
-        if value >= 0:
-            y_pos = baseline
-            bar_color = GREEN
-        else:
-            y_pos = baseline - height
-            bar_color = RED
-
-        d.add(
-            Rect(
-                x_pos,
-                y_pos,
-                bar_width,
-                height,
-                fillColor=bar_color,
-                strokeColor=None,
-            )
-        )
-
-        d.add(
-            String(
-                x_pos + bar_width / 2,
-                42,
-                label,
-                fontSize=7,
-                textAnchor="middle",
-            )
-        )
-
-        d.add(
-            String(
-                x_pos + bar_width / 2,
-                y_pos + height + 5,
-                fmt(value),
-                fontSize=6,
-                textAnchor="middle",
-            )
-        )
-
-    d.add(
-        String(
-            25,
-            150,
-            f"Latest Year: {int(row['year_num'])}",
-            fontSize=7,
-            fillColor=MID_GREY,
-        )
-    )
-
-    return d
 
 
 print("Part 5 loaded")
@@ -1370,7 +892,7 @@ def pros_cons_table(pros, cons):
 
         pro_content.append(
             Paragraph(
-                "• No qualifying positive signal available.",
+                "â€¢ No qualifying positive signal available.",
                 BULLET_GREEN,
             )
         )
@@ -1381,7 +903,7 @@ def pros_cons_table(pros, cons):
 
             pro_content.append(
                 Paragraph(
-                    f"• {text}",
+                    f"â€¢ {text}",
                     BULLET_GREEN,
                 )
             )
@@ -1390,7 +912,7 @@ def pros_cons_table(pros, cons):
 
         con_content.append(
             Paragraph(
-                "• No qualifying negative signal available.",
+                "â€¢ No qualifying negative signal available.",
                 BULLET_RED,
             )
         )
@@ -1401,7 +923,7 @@ def pros_cons_table(pros, cons):
 
             con_content.append(
                 Paragraph(
-                    f"• {text}",
+                    f"â€¢ {text}",
                     BULLET_RED,
                 )
             )
@@ -1715,7 +1237,7 @@ def test_five_tearsheets():
 
     print()
     print("=" * 70)
-    print("DAY 33 — TEARSHEET TEST")
+    print("DAY 33 â€” TEARSHEET TEST")
     print("=" * 70)
 
     successful = []
@@ -1738,7 +1260,7 @@ def test_five_tearsheets():
 
             successful.append(ticker)
 
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001
 
             print(f"FAILED: {ticker}")
 

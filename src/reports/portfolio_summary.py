@@ -907,7 +907,7 @@ def build_portfolio_summary():
             if index < len(company_ids):
                 story.append(PageBreak())
 
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001  # noqa: BLE001
 
             print(f"FAILED: {company_id} -> {exc}")
 

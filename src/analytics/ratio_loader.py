@@ -3,7 +3,6 @@ import sqlite3
 from pathlib import Path
 
 import pandas as pd
-
 from cagr import (
     eps_cagr,
     pat_cagr,
@@ -191,8 +190,7 @@ def generate_edge_case_log(df):
 
         neg_equity = df[df["return_on_equity_pct"].isna()]
         f.write(
-            f"ROE not computed (negative/zero equity): "
-            f"{len(neg_equity)} rows\n"
+            f"ROE not computed (negative/zero equity): " f"{len(neg_equity)} rows\n"
         )
 
         no_interest = df[df["interest_coverage"].isna()]
@@ -202,29 +200,18 @@ def generate_edge_case_log(df):
         )
 
         debt_free = df[df["debt_to_equity"] == 0]
-        f.write(
-            f"Debt Free companies: {len(debt_free)} rows\n"
-        )
+        f.write(f"Debt Free companies: {len(debt_free)} rows\n")
 
         asset_missing = df[df["asset_turnover"].isna()]
-        f.write(
-            f"Asset Turnover unavailable: "
-            f"{len(asset_missing)} rows\n"
-        )
+        f.write(f"Asset Turnover unavailable: " f"{len(asset_missing)} rows\n")
 
         rev_missing = df[df["revenue_cagr"].isna()]
         pat_missing = df[df["pat_cagr"].isna()]
         eps_missing = df[df["eps_cagr"].isna()]
 
-        f.write(
-            f"Revenue CAGR unavailable: {len(rev_missing)} rows\n"
-        )
-        f.write(
-            f"PAT CAGR unavailable: {len(pat_missing)} rows\n"
-        )
-        f.write(
-            f"EPS CAGR unavailable: {len(eps_missing)} rows\n"
-        )
+        f.write(f"Revenue CAGR unavailable: {len(rev_missing)} rows\n")
+        f.write(f"PAT CAGR unavailable: {len(pat_missing)} rows\n")
+        f.write(f"EPS CAGR unavailable: {len(eps_missing)} rows\n")
 
         f.write("\nReview Category:\n")
         f.write("- Data source issue\n")

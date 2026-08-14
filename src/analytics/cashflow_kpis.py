@@ -1,4 +1,4 @@
-﻿import re
+import re
 import sqlite3
 from pathlib import Path
 
@@ -112,7 +112,7 @@ def safe_float(value):
         if pd.isna(value):
             return np.nan
         return float(value)
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return np.nan
 
 
@@ -125,7 +125,7 @@ def calculate_cagr(start, end, years=5):
 
     try:
         return ((end / start) ** (1 / years) - 1) * 100
-    except Exception:
+    except (TypeError, ValueError, OverflowError):
         return np.nan
 
 

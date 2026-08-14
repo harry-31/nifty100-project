@@ -61,8 +61,6 @@ def portfolio_stats():
         conn,
     )
 
-    conn.close()
-
     if df.empty:
         return {}
 
@@ -131,12 +129,54 @@ def portfolio_stats():
             "Mean": safe_value(values.mean()),
             "Std": safe_value(values.std()),
         }
-    output_dir = Path("output")
+        # Sector weights: normalize raw index weights to 100%
+    sector_df = pd.read_sql_query(
+        """
+        SELECT
+            broad_sector,
+            index_weight_pct
+        FROM sectors
+        WHERE broad_sector IS NOT NULL
+          AND index_weight_pct IS NOT NULL
+        """,
+        conn,
+    )
+
+    if sector_df.empty:
+        result["sector_weights"] = {}
+    else:
+        sector_df["index_weight_pct"] = pd.to_numeric(
+            sector_df["index_weight_pct"],
+            errors="coerce",
+        )
+
+        sector_df = sector_df.dropna(subset=["index_weight_pct"])
+
+        total_weight = sector_df["index_weight_pct"].sum()
+
+        if total_weight <= 0:
+            result["sector_weights"] = {}
+        else:
+            sector_weights = (
+                sector_df.groupby("broad_sector")["index_weight_pct"]
+                .sum()
+                .div(total_weight)
+                .mul(100)
+                .round(2)
+                .sort_values(ascending=False)
+            )
+
+            result["sector_weights"] = sector_weights.to_dict()
+
+        output_dir = Path("output")
     output_dir.mkdir(exist_ok=True)
 
     stats_rows = []
 
     for metric, stats in result.items():
+        if metric == "sector_weights":
+            continue
+
         stats_rows.append(
             {
                 "metric": metric,
@@ -150,6 +190,11 @@ def portfolio_stats():
             }
         )
 
-    pd.DataFrame(stats_rows).to_csv(output_dir / "portfolio_stats.csv", index=False)
+    pd.DataFrame(stats_rows).to_csv(
+        output_dir / "portfolio_stats.csv",
+        index=False,
+    )
+
+    conn.close()
 
     return result

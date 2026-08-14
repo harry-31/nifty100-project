@@ -1,4 +1,4 @@
-import plotly.express as px
+﻿import plotly.express as px
 import streamlit as st
 from utils.db import (
     get_companies,
@@ -20,13 +20,13 @@ def safe(value):
 
         return round(float(value), 2)
 
-    except:
+    except (TypeError, ValueError, OverflowError):
         return "N/A"
 
 
 st.set_page_config(page_title="Company Profile", layout="wide")
 
-st.title("🏢 Company Profile")
+st.title("ðŸ¢ Company Profile")
 
 # -------------------------
 # Load Data
@@ -39,10 +39,10 @@ sectors = get_sectors()
 # Company Search
 # -------------------------
 
-company_name = st.selectbox("🔍 Search Company", companies["company_name"].tolist())
+company_name = st.selectbox("ðŸ” Search Company", companies["company_name"].tolist())
 
 if not company_name:
-    st.warning("Ticker not found — please try another.")
+    st.warning("Ticker not found â€” please try another.")
     st.stop()
 
 company_id = companies.loc[companies["company_name"] == company_name, "id"].iloc[0]
@@ -53,7 +53,7 @@ pl = get_pl(company_id)
 pros = get_pros_cons(company_id)
 
 if company.empty:
-    st.warning("Ticker not found — please try another.")
+    st.warning("Ticker not found â€” please try another.")
     st.stop()
 
 info = company.iloc[0]
@@ -142,7 +142,7 @@ if not pl.empty:
     pl = pl[pl["year"] != "TTM"]
     pl = pl.sort_values("year")
 
-    st.subheader("📈 Revenue & Net Profit Trend")
+    st.subheader("ðŸ“ˆ Revenue & Net Profit Trend")
 
     col1, col2 = st.columns(2)
 
@@ -176,7 +176,7 @@ st.divider()
 # ROE vs ROCE Trend
 # ==========================
 
-st.subheader("📊 ROE vs ROCE Trend")
+st.subheader("ðŸ“Š ROE vs ROCE Trend")
 
 if not ratios.empty:
 
@@ -207,7 +207,7 @@ st.divider()
 # Pros & Cons
 # ==========================
 
-st.subheader("✅ Pros & ❌ Cons")
+st.subheader("âœ… Pros & âŒ Cons")
 
 if pros.empty:
 
@@ -219,7 +219,7 @@ else:
 
     with col1:
 
-        st.markdown("### ✅ Pros")
+        st.markdown("### âœ… Pros")
 
         pros_list = str(pros.iloc[0]["pros"]).split("\n")
 
@@ -229,7 +229,7 @@ else:
 
     with col2:
 
-        st.markdown("### ❌ Cons")
+        st.markdown("### âŒ Cons")
 
         cons_list = str(pros.iloc[0]["cons"]).split("\n")
 
@@ -243,7 +243,7 @@ st.divider()
 # Additional Information
 # ==========================
 
-with st.expander("📋 Additional Company Details"):
+with st.expander("ðŸ“‹ Additional Company Details"):
 
     c1, c2 = st.columns(2)
 
