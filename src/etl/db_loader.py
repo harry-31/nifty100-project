@@ -16,6 +16,10 @@ valid_ids = set(companies["id"])
 # ---------------- Profit & Loss ----------------
 pl = load_excel("data/raw/profitandloss.xlsx")
 pl = pl[pl["company_id"].isin(valid_ids)]
+
+# Remove duplicate company-year records
+pl = pl.drop_duplicates(subset=["company_id", "year"], keep="first")
+
 pl.to_sql("profitandloss", conn, if_exists="append", index=False)
 
 # ---------------- Balance Sheet ----------------

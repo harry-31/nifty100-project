@@ -23,7 +23,7 @@ ABB,Mar 2021,+,-,-,Reinvestor
 ABB,Mar 2022,+,-,-,Reinvestor
 ABB,Mar 2023,+,-,-,Reinvestor
 ABB,Mar 2024,+,-,-,Reinvestor
-ABB,Mar 2014,+,+,+,Cash Accumulator
+ABB,Mar 2014,+,+,+,Mixed
 ABB,Mar 2015,-,-,+,Growth Funded by Debt
 ABB,Mar 2016,+,-,-,Reinvestor
 ABB,Mar 2017,+,-,-,Reinvestor
@@ -34,7 +34,7 @@ ABB,Mar 2021,+,-,-,Reinvestor
 ABB,Mar 2022,+,-,-,Reinvestor
 ABB,Mar 2023,+,-,+,Mixed
 ABB,Mar 2024,+,-,-,Reinvestor
-ADANIENSOL,Mar 2014,+,+,+,Cash Accumulator
+ADANIENSOL,Mar 2014,+,+,+,Mixed
 ADANIENSOL,Mar 2015,-,-,+,Growth Funded by Debt
 ADANIENSOL,Mar 2016,+,-,-,Reinvestor
 ADANIENSOL,Mar 2017,+,-,-,Reinvestor
@@ -214,11 +214,11 @@ BANKBARODA,Mar 2021,-,-,-,Pre-Revenue
 BANKBARODA,Mar 2022,+,-,-,Reinvestor
 BANKBARODA,Mar 2023,-,-,-,Pre-Revenue
 BANKBARODA,Mar 2024,-,-,+,Growth Funded by Debt
-BEL,Mar 2013,-,+,-,Unknown
-BEL,Mar 2014,-,+,-,Unknown
+BEL,Mar 2013,-,+,-,Mixed
+BEL,Mar 2014,-,+,-,Mixed
 BEL,Mar 2015,+,-,-,Reinvestor
 BEL,Mar 2016,+,-,-,Reinvestor
-BEL,Mar 2017,-,+,-,Unknown
+BEL,Mar 2017,-,+,-,Mixed
 BEL,Mar 2018,-,-,-,Pre-Revenue
 BEL,Mar 2019,+,-,-,Reinvestor
 BEL,Mar 2020,+,-,-,Reinvestor
@@ -244,7 +244,7 @@ BHEL,Mar 2015,+,+,-,Liquidating Assets
 BHEL,Mar 2016,+,+,-,Liquidating Assets
 BHEL,Mar 2017,+,-,-,Reinvestor
 BHEL,Mar 2018,+,+,-,Liquidating Assets
-BHEL,Mar 2019,-,+,-,Unknown
+BHEL,Mar 2019,-,+,-,Mixed
 BHEL,Mar 2020,-,+,+,Distress Signal
 BHEL,Mar 2021,+,-,-,Reinvestor
 BHEL,Mar 2022,+,-,-,Reinvestor
@@ -442,8 +442,8 @@ GRASIM,Mar 2021,+,-,-,Reinvestor
 GRASIM,Mar 2022,+,-,-,Reinvestor
 GRASIM,Mar 2023,-,-,+,Growth Funded by Debt
 GRASIM,Mar 2024,-,-,+,Growth Funded by Debt
-HAL,Mar 2017,-,+,-,Unknown
-HAL,Mar 2018,-,+,-,Unknown
+HAL,Mar 2017,-,+,-,Mixed
+HAL,Mar 2018,-,+,-,Mixed
 HAL,Mar 2019,-,+,+,Distress Signal
 HAL,Mar 2020,+,-,+,Mixed
 HAL,Mar 2021,+,-,-,Reinvestor
@@ -486,8 +486,8 @@ HDFCBANK,Mar 2021,+,-,-,Reinvestor
 HDFCBANK,Mar 2022,-,-,+,Growth Funded by Debt
 HDFCBANK,Mar 2023,+,-,+,Mixed
 HDFCBANK,Mar 2024,+,+,-,Liquidating Assets
-HDFCLIFE,Mar 2013,-,-,-,Pre-Revenue
-HDFCLIFE,Mar 2014,-,-,-,Pre-Revenue
+HDFCLIFE,Mar 2013,-,-,-,Mixed
+HDFCLIFE,Mar 2014,-,-,-,Mixed
 HDFCLIFE,Mar 2015,+,-,-,Reinvestor
 HDFCLIFE,Mar 2016,+,-,-,Reinvestor
 HDFCLIFE,Mar 2017,+,-,-,Reinvestor
@@ -547,7 +547,7 @@ ICICIBANK,Mar 2023,-,-,+,Growth Funded by Debt
 ICICIBANK,Mar 2024,+,-,+,Mixed
 ICICIGI,Mar 2013,+,-,+,Mixed
 ICICIGI,Mar 2014,+,-,+,Mixed
-ICICIGI,Mar 2015,-,+,-,Unknown
+ICICIGI,Mar 2015,-,+,-,Mixed
 ICICIGI,Mar 2016,+,-,-,Reinvestor
 ICICIGI,Mar 2017,+,-,+,Mixed
 ICICIGI,Mar 2018,+,-,-,Reinvestor
@@ -557,8 +557,8 @@ ICICIGI,Mar 2021,+,-,-,Reinvestor
 ICICIGI,Mar 2022,+,+,-,Liquidating Assets
 ICICIGI,Mar 2023,+,-,-,Reinvestor
 ICICIGI,Mar 2024,+,-,-,Reinvestor
-ICICIPRULI,Mar 2013,-,+,-,Unknown
-ICICIPRULI,Mar 2014,-,+,-,Unknown
+ICICIPRULI,Mar 2013,-,+,-,Mixed
+ICICIPRULI,Mar 2014,-,+,-,Mixed
 ICICIPRULI,Mar 2015,+,-,-,Reinvestor
 ICICIPRULI,Mar 2016,+,+,-,Liquidating Assets
 ICICIPRULI,Mar 2017,+,-,-,Reinvestor
@@ -568,7 +568,7 @@ ICICIPRULI,Mar 2020,+,-,-,Reinvestor
 ICICIPRULI,Mar 2021,+,-,+,Mixed
 ICICIPRULI,Mar 2022,+,-,-,Reinvestor
 ICICIPRULI,Mar 2023,+,-,-,Reinvestor
-ICICIPRULI,Mar 2024,-,+,-,Unknown
+ICICIPRULI,Mar 2024,-,+,-,Mixed
 INDIGO,Mar 2013,+,-,+,Mixed
 INDIGO,Mar 2014,+,-,+,Mixed
 INDIGO,Mar 2015,+,-,-,Reinvestor
@@ -577,7 +577,7 @@ INDIGO,Mar 2017,+,-,-,Reinvestor
 INDIGO,Mar 2018,+,-,+,Mixed
 INDIGO,Mar 2019,+,-,-,Reinvestor
 INDIGO,Mar 2020,+,-,-,Reinvestor
-INDIGO,Mar 2021,-,+,-,Unknown
+INDIGO,Mar 2021,-,+,-,Mixed
 INDIGO,Mar 2022,+,+,-,Liquidating Assets
 INDIGO,Mar 2023,+,-,-,Reinvestor
 INDIGO,Mar 2024,+,-,-,Reinvestor
@@ -632,9 +632,9 @@ IRFC,Mar 2017,-,+,+,Distress Signal
 IRFC,Mar 2018,-,+,+,Distress Signal
 IRFC,Mar 2019,-,+,+,Distress Signal
 IRFC,Mar 2020,-,+,+,Distress Signal
-IRFC,Mar 2021,-,+,+,Distress Signal
+IRFC,Mar 2021,-,+,+,Mixed
 IRFC,Mar 2022,-,-,+,Growth Funded by Debt
-IRFC,Mar 2023,-,+,+,Distress Signal
+IRFC,Mar 2023,-,+,+,Mixed
 IRFC,Mar 2024,+,-,-,Reinvestor
 ITC,Mar 2013,+,-,-,Reinvestor
 ITC,Mar 2014,+,-,-,Reinvestor
@@ -661,7 +661,7 @@ JINDALSTEL,Mar 2022,+,-,-,Reinvestor
 JINDALSTEL,Mar 2023,+,-,-,Reinvestor
 JINDALSTEL,Mar 2024,+,-,+,Mixed
 JIOFIN,Mar 2023,+,-,-,Reinvestor
-JIOFIN,Mar 2024,-,+,-,Unknown
+JIOFIN,Mar 2024,-,+,-,Mixed
 JSWENERGY,Mar 2013,+,-,-,Reinvestor
 JSWENERGY,Mar 2014,+,-,-,Reinvestor
 JSWENERGY,Mar 2015,+,-,-,Reinvestor
@@ -701,7 +701,7 @@ KOTAKBANK,Mar 2024,+,-,+,Mixed
 LICI,Mar 2019,+,+,-,Liquidating Assets
 LICI,Mar 2020,+,-,-,Reinvestor
 LICI,Mar 2021,+,+,-,Liquidating Assets
-LICI,Mar 2022,-,+,+,Distress Signal
+LICI,Mar 2022,-,+,+,Mixed
 LICI,Mar 2023,+,-,-,Reinvestor
 LICI,Mar 2024,+,-,-,Reinvestor
 LODHA,Mar 2016,+,-,+,Mixed
@@ -1054,11 +1054,11 @@ TITAN,Mar 2014,-,-,+,Growth Funded by Debt
 TITAN,Mar 2015,+,-,-,Reinvestor
 TITAN,Mar 2016,+,-,-,Reinvestor
 TITAN,Mar 2017,+,-,-,Reinvestor
-TITAN,Mar 2018,-,+,-,Unknown
+TITAN,Mar 2018,-,+,-,Mixed
 TITAN,Mar 2019,+,-,-,Reinvestor
-TITAN,Mar 2020,-,+,-,Unknown
+TITAN,Mar 2020,-,+,-,Mixed
 TITAN,Mar 2021,+,-,-,Reinvestor
-TITAN,Mar 2022,-,+,-,Unknown
+TITAN,Mar 2022,-,+,-,Mixed
 TITAN,Mar 2023,+,-,+,Mixed
 TITAN,Mar 2024,+,-,-,Reinvestor
 TORNTPHARM,Mar 2013,+,-,+,Mixed
@@ -1123,7 +1123,7 @@ UNIONBANK,Mar 2023,+,-,-,Reinvestor
 UNIONBANK,Mar 2024,+,-,-,Reinvestor
 UNITDSPR,Mar 2013,+,-,-,Reinvestor
 UNITDSPR,Mar 2014,-,-,+,Growth Funded by Debt
-UNITDSPR,Mar 2015,-,+,-,Unknown
+UNITDSPR,Mar 2015,-,+,-,Mixed
 UNITDSPR,Mar 2016,+,+,-,Liquidating Assets
 UNITDSPR,Mar 2017,+,-,-,Reinvestor
 UNITDSPR,Mar 2018,+,+,-,Liquidating Assets
@@ -1172,7 +1172,7 @@ WIPRO,Mar 2024,+,+,-,Liquidating Assets
 ZOMATO,Mar 2020,-,+,+,Distress Signal
 ZOMATO,Mar 2021,-,-,+,Growth Funded by Debt
 ZOMATO,Mar 2022,-,-,+,Growth Funded by Debt
-ZOMATO,Mar 2023,-,+,-,Unknown
+ZOMATO,Mar 2023,-,+,-,Mixed
 ZOMATO,Mar 2024,+,-,-,Reinvestor
 ZYDUSLIFE,Mar 2013,+,-,+,Mixed
 ZYDUSLIFE,Mar 2014,+,-,-,Reinvestor
