@@ -3,13 +3,13 @@ import sqlite3
 from pathlib import Path
 
 import pandas as pd
-from cagr import (
+from src.analytics.cagr import (
     eps_cagr,
     pat_cagr,
     revenue_cagr,
 )
-from cashflow_kpis import free_cash_flow
-from ratios import (
+from src.analytics.cashflow_kpis import free_cash_flow
+from src.analytics.ratios import (
     asset_turnover,
     debt_to_equity,
     interest_coverage_ratio,
@@ -229,3 +229,4 @@ if __name__ == "__main__":
 
     save_to_database(ratio_df)
     generate_edge_case_log(ratio_df)
+
